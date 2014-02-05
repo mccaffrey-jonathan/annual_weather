@@ -36,6 +36,11 @@
   [endpoint query]
   (let [url (str "http://www.ncdc.noaa.gov/cdo-web/api/v2/"
                  (name endpoint))
-        opts (assoc auth-opts :query-params query)]
-  (http/get url opts)))
+        opts (assoc auth-opts :query-params query)
+        prom (http/get url opts)]
+    ; (print @prom)
+    prom))
 
+; NOTE data query without any station qualifiers times out
+
+; Note, data returned is in 10ths of a degree celsius

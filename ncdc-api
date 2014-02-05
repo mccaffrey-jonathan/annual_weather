@@ -1,0 +1,37 @@
+Allows 1000 requests per diem.  With a bit of caching on your end, this sound slike plenty to get off the gorund.
+
+The token is supposed to be passed in the header but I cannot figure out how!
+
+GHCNDMS is monthly summaries, EMNT, EMXT, MMNT, MMXT, and MNTM may be enough to build your dat?
+    > Is MNTM bounded by MMXT and MMNT?
+    > Should we do 1 year or last 5 or 10?  Start with 1?
+
+Check coverage in continental US?
+How to find closest city or station?
+
+; I see weird values here that don't look like temperatures
+  {:station "GHCND:AR000875850",
+   :value 191,
+   :attributes "0,0",
+   :datatype "MMXT",
+   :date "1999-05-01"}
+
+Group the data differently:
+
+TODO Those data-points may not be complete for all stations,
+their API doesn't seem to have a way to specify data that has ALL of a series of datasets
+
+Sample over time?
+
+For one location over time, histogram of included fields per-date
+    For multiple sampled locations, big histogram of fields per-date?
+        Doesn't capture alot of the subtleties of distribution
+
+Over a span of time, for multiple locations sampled by population
+    API: population sample US cities
+    Histogram of how many months over time had all 5 datetypes present
+
+Strangely, the STATIONS endpoint reports an error if dates are used
+Datatype and set constraints are fine
+
+
