@@ -1,8 +1,9 @@
-(ns annual-weather.utils )
+(ns annual-weather.utils
+  (:require [clojure.data [json :as json]])
+  (:use [clj-utils.core]))
 
-(defmacro ?
-  [val]
-  `(let [x# ~val]
-           (print '~val "is " x#)
-     x#
-     ))
+(def-> unpack-http-kit-json-res
+  deref
+  ; ((fn [x] (print x) x))
+  :body
+  (json/read-str :key-fn keyword))

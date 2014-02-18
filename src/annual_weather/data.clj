@@ -1,35 +1,21 @@
 (ns annual-weather.data
   (:require [clojure.java [io :as io]]
             [clojure.data [json :as json]]
+            [clojure.core.rrb-vector :as fv]
             [clojure
              [pprint :as pp]
              [string :as s]]
-            [org.httpkit.client :as http]))
-
-; generic stuff
-; TODO metadata and docstr
-(defmacro def->
-  [fn-name & fn-body]
-  `(defn ~fn-name
-     [x#]
-     (-> x# ~@fn-body)))
-
-; http://briancarper.net/blog/495/
-(defmacro redir [filename & body]
-  `(binding [*out* (clojure.java.io/writer ~filename)] ~@body)) 
+            [org.httpkit.client :as http])
+  (:use [annual-weather utils]
+        [clj-utils.core]))
 
 (def token (s/trim (slurp "ncdc-token")))
 (def auth-opts {:headers {"token" token}})
 
 ; (def url "http://www.ncdc.noaa.gov/cdo-web/api/v2/locations?datasetid=GHCNDMS")
 
-(def-> unpack-res
-  deref
-  (get-in [:body])
-  (json/read-str :key-fn keyword))
-
 (def-> pp-res
-  unpack-res
+  unpack-http-kit-json-res
   pp/pprint)
 
 (defn query-cdo
@@ -41,6 +27,22 @@
     ; (print @prom)
     prom))
 
-; NOTE data query without any station qualifiers times out
+; TODO async version
+(defn query-cdo-full-depaginated-results
+  [endpoint query]
+  (loop [accum []
+         query-offset 1]
+    (let [{results :results
+           {{:keys [limit offset] cnt :count} :resultset} :metadata
+           :as ret}
+          (unpack-http-kit-json-res
+            (query-cdo endpoint
+                       (assoc query :limit 1000 :offset query-offset)))
+          grown-results (fv/catvec accum (if results results []))]
+      (if (< cnt (+ limit offset))
+        grown-results
+        (recur grown-results
+               (+ limit offset))))))
 
+; NOTE data query without any station qualifiers times out
 ; Note, data returned is in 10ths of a degree celsius

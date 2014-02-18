@@ -34,4 +34,6 @@ Over a span of time, for multiple locations sampled by population
 Strangely, the STATIONS endpoint reports an error if dates are used
 Datatype and set constraints are fine
 
+Both the geocoding & ncdc apis have initial rate-limits although these can be loosened with commercial licenses.
+Start at 1000 requests/day.  If you get there, you will be fine.
 
