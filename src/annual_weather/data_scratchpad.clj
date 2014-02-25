@@ -67,16 +67,21 @@
 (def mock-data true)
 (def monthly-data 
   (if mock-data
-    (read-string (slurp "la-data"))
+    (read-string (slurp "la-data-d3"))
     (unpack-http-kit-json-res (query-cdo :data query-l))))
 
 (defn api-handler []
   monthly-data)
 
+(defn groups-to-d3-style
+  [gs]
+  (vec (for [[k v] gs] {:key k :value v})))
+
    ; monthly-data)
 ; (redir "stable-data"
 ;         (pp/pprint monthly-data))
-;
+
+; TODO XXX regenerate data for d3
 ; (redir "la-data"
 ;        (pp/pprint
 ; (->> "Los Angeles, California"

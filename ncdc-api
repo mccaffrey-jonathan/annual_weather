@@ -37,3 +37,13 @@ Datatype and set constraints are fine
 Both the geocoding & ncdc apis have initial rate-limits although these can be loosened with commercial licenses.
 Start at 1000 requests/day.  If you get there, you will be fine.
 
+TODO: use something form the average data for a station to partitition it into a color palette.  For now, temperate
+
+# Designing display 
+I think all of the backgrounds should be primarily white, so as not to waste immense amounts of ink.
+Scale on the side vs on the plot ?
+
+TODO axis labels, or labels on chart?  Convert labeling to F (or optional C?)
+Month labels on bottom?
+Well-designed labels about location?
+Try out weekly chart ?
