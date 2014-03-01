@@ -4,7 +4,10 @@
 (defn index-page []
   (html5
     [:head
-     [:title "Hello World"] 
+
+     [:meta {:http-equiv "Content-Type"
+             :content "text/html;charset=utf-8"}]
+     [:title "Hello Worl"] 
      [:link {:rel "stylesheet/less"
              :type "text/css"
              :href "less/chart.less"}]
@@ -14,6 +17,5 @@
                  "http://cdnjs.cloudflare.com/ajax/libs/less.js/1.6.3/less.min.js"
                  "js/main.js")]
     [:body
-     [:h1 "Hello World"]
      [:div {:class "result"}]]))
 

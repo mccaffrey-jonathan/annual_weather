@@ -1,5 +1,29 @@
+
+function formatFahrenheit(d) {
+  return d + "\u00B0F";
+}
+
+// TODO I really prefer just in front of decimal
+var formatNumber = d3.format(".1f");
+
+function ncdcToFahrenheit(ncdc) {
+    return ((9*ncdc)/50) + 32;
+}
+
 function init() {
+
     $.get("data", function(data) {
+
+        // Convert strings to numbers.
+        data.forEach(function(d) {
+            d.key = +d.key;
+            d.value.MNTM = ncdcToFahrenheit(d3.mean(d.value.MNTM));
+            d.value.MMXT = ncdcToFahrenheit(d3.mean(d.value.MMXT));
+            d.value.MMNT = ncdcToFahrenheit(d3.mean(d.value.MMNT));
+            d.value.EMXT = ncdcToFahrenheit(d3.mean(d.value.EMXT));
+            d.value.EMNT = ncdcToFahrenheit(d3.mean(d.value.EMNT));
+        });
+
         // TODO start graph setup async from data fetching
         // $(".result").html(JSON.stringify(data));
 
@@ -13,9 +37,10 @@ function init() {
             .domain([0, 12])
             .range([0, width]);
 
+        // Inverted range, Bigger is up
         var y = d3.scale.linear()
-            .domain([0, 1000])
-            .range([0, height]);
+            .domain([-20, 120])
+            .range([height, 0]);
 
         // An SVG element with a bottom-right origin.
         var svg = d3.select(".result").append("svg")
@@ -24,15 +49,24 @@ function init() {
           .append("g")
             .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-        // Convert strings to numbers.
-        data.forEach(function(d) {
-            d.key = +d.key;
-            // d.value.MNTM = +d.value.MNTM;
-            // d.value.MMXT = +d.value.MMXT;
-            // d.value.MNTM = +d.value.MMNT;
-            // d.value.EMXT = +d.value.EMXT;
-            // d.value.EMNT = +d.value.EMNT;
-        });
+        // tickSize width drives the ticks across the entire chart
+        var yAxis = d3.svg.axis()
+            .scale(y)
+            .ticks(20)
+            .tickSize(width)
+            .tickFormat(formatFahrenheit)
+            .orient("right");
+
+        var gy = svg.append("g")
+            .attr("class", "y axis")
+            .call(yAxis);
+
+        gy.selectAll("g").filter(function(d) { return d; })
+            .classed("minor", true);
+
+        gy.selectAll("text")
+            .attr("x", 4)
+            .attr("dy", -4);
 
         var bucket = svg.selectAll(".bucket")
             .data(data);
@@ -54,11 +88,11 @@ function init() {
         bucket.select(".box")
           .attr("width", barWidth)
           .attr("height", function (d) {
-                  return y(d3.mean(d.value.MMXT) - d3.mean(d.value.MMNT));
+                  return y(d.value.MMNT) - y(d.value.MMXT);
           })
           .attr("x", -barWidth/2)
           .attr("y", function(d) {
-              return y(d3.mean(d.value.MMNT));
+              return y(d.value.MMXT);
           });
 
         // TODO these pinch over the rect stroke a bit...
@@ -67,10 +101,10 @@ function init() {
           .attr("x1", -barWidth/2)
           .attr("x2", barWidth/2)
           .attr("y1", function(d) {
-              return y(d3.mean(d.value.MNTM));
+              return y(d.value.MNTM);
           })
           .attr("y2", function(d) {
-              return y(d3.mean(d.value.MNTM));
+              return y(d.value.MNTM);
           });
 
         bucketEnter.append("line").attr("class", "whisker-line top");
@@ -82,18 +116,18 @@ function init() {
 
         bucket.selectAll(".whisker-line.top")
           .attr("y1", function (d) {
-              return y(d3.mean(d.value.MMXT));
+              return y(d.value.MMXT);
           })
           .attr("y2", function(d) {
-              return y(d3.mean(d.value.EMXT));
+              return y(d.value.EMXT);
           });
 
         bucket.selectAll(".whisker-line.bot")
           .attr("y1", function (d) {
-              return y(d3.mean(d.value.MMNT));
+              return y(d.value.MMNT);
           })
           .attr("y2", function(d) {
-              return y(d3.mean(d.value.EMNT));
+              return y(d.value.EMNT);
           });
 
         bucketEnter.append("line").attr("class", "whisker-end top");
@@ -104,18 +138,18 @@ function init() {
 
         bucket.selectAll(".whisker-end.top")
           .attr("y1", function (d) {
-              return y(d3.mean(d.value.EMXT));
+              return y(d.value.EMXT);
           })
           .attr("y2", function(d) {
-              return y(d3.mean(d.value.EMXT));
+              return y(d.value.EMXT);
           });
 
         bucket.selectAll(".whisker-end.bot")
           .attr("y1", function (d) {
-              return y(d3.mean(d.value.EMNT));
+              return y(d.value.EMNT);
           })
           .attr("y2", function(d) {
-              return y(d3.mean(d.value.EMNT));
+              return y(d.value.EMNT);
           });
 
 
