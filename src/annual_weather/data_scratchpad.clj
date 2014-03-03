@@ -219,6 +219,11 @@
 ;              fuzzy-bound-geocode-loc
 ;              window-to-gmaps-url)})
 
+; (redir "all-datatypes"
+;        (pp/pprint
+;        (query-cdo-full-depaginated-results
+;          :datatypes
+;          {})))
 ; (redir "zip-code-quality"
 ;        (with-open [zips-in (io/reader
 ;                              "/home/jmccaf/annual-weather/zip-code-list")]

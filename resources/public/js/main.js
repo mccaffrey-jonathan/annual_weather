@@ -1,3 +1,21 @@
+var monthDictionary = {
+    0: "Jan",
+    1: "Feb",
+    2: "Mar",
+    3: "Apr",
+    4: "May",
+    5: "Jun",
+    6: "Jul",
+    7: "Aug",
+    8: "Sep",
+    9: "Oct",
+    10: "Nov",
+    11: "Dec"
+};
+
+function formatMonths(d) {
+    return monthDictionary[d]
+}
 
 function formatFahrenheit(d) {
   return d + "\u00B0F";
@@ -27,7 +45,8 @@ function init() {
         // TODO start graph setup async from data fetching
         // $(".result").html(JSON.stringify(data));
 
-        var margin = {top: 20, right: 40, bottom: 30, left: 20},
+        var yAxisTextOffset = 45,
+            margin = {top: 20, right: 40, bottom: 30, left: yAxisTextOffset},
             width = 960 - margin.left - margin.right,
             height = 500 - margin.top - margin.bottom,
             barSpace = Math.floor(width / data.length) - 1,
@@ -65,8 +84,27 @@ function init() {
             .classed("minor", true);
 
         gy.selectAll("text")
-            .attr("x", 4)
-            .attr("dy", -4);
+            .attr("x", -yAxisTextOffset)
+            .attr("dy", 4);
+
+        var xAxis = d3.svg.axis()
+            .scale(x)
+            .tickSize(-height)
+            .tickSubdivide(true)
+            .tickFormat(formatMonths);
+
+        // Add the x-axis.
+        var gx = svg.append("g")
+            .attr("class", "x axis")
+            .attr("transform", "translate(0," + height + ")")
+            .call(xAxis);
+
+        gx.selectAll("text")
+            .attr("x", barWidth/2)
+            .style("text-anchor", "middle");
+
+        gx.selectAll("g").filter(function(d) { return d; })
+            .classed("hidden", true);
 
         var bucket = svg.selectAll(".bucket")
             .data(data);
@@ -152,6 +190,43 @@ function init() {
               return y(d.value.EMNT);
           });
 
+    var cityAndState = "Los Angeles, CA";
+    var latAndLong = "43\u00B0N 37\u00B0W";
+    var climate = "Arid Climate";
+    var flavorText = "300 Days of Sunshine";
+    var url = "www.annual-weather.com/LosAngelesCA";
+
+    var label = svg.append("g")
+        .classed("label", true)
+        .attr("transform", "translate(50, 50)");
+
+    var labelBody = label.append("foreignObject")
+        .attr("width", 480)
+        .attr("height", 500)
+        .append("xhtml:body")
+        .style("text-align", "center");
+
+//         .style("font", "14px 'Helvetica Neue'")
+//         .html("HTML recipe");
+
+    labelBody.append("h3")
+        .html(cityAndState);
+
+    labelBody.append("h4")
+        .html(latAndLong);
+
+    labelBody.append("hr");
+
+    labelBody.append("h6")
+        .html(climate);
+
+    labelBody.append("h6")
+        .html(flavorText);
+
+    labelBody.append("hr");
+
+    labelBody.append("a")
+        .html(url);
 
     });
 }

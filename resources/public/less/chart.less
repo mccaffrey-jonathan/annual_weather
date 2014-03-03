@@ -1,0 +1,60 @@
+
+/*
+@blue: #3559B1;
+@purple: #8C35B1;
+@brown: #B16B35;
+@tan: #AFB135;
+@green: #35B158;
+
+@middle-stroke-color: @purple;
+@box-fill-color: @tan;
+@box-stroke-color: @green;
+@whisker-stroke-color: @blue;
+@whisker-end-stroke-color: @purple;
+*/
+
+@middle-stroke-color: #7B8B98;
+@box-fill-color: #7C8479;
+@box-stroke-color: #575040;
+@whisker-stroke-color: #373632;
+@whisker-end-stroke-color: #524346;
+
+.middle {
+    stroke: @middle-stroke-color;
+    stroke-width: 3;
+}
+
+.box {
+    fill: @box-fill-color;
+    stroke: @box-stroke-color;
+    stroke-width: 1;
+}
+
+.whisker-line {
+    stroke: @whisker-stroke-color;
+    stroke-width: 1;
+}
+
+.whisker-end {
+    stroke: @whisker-end-stroke-color;
+    stroke-width: 2;
+}
+
+.axis path {
+  display: none;
+}
+
+.axis line {
+  shape-rendering: crispEdges;
+  stroke: #000;
+}
+
+.axis .minor line {
+  stroke: #777;
+  stroke-dasharray: 2,2;
+}
+
+.axis .hidden line {
+  visibility: hidden;
+}
+
