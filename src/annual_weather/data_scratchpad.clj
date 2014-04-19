@@ -51,6 +51,12 @@
 
 (def query-l (assoc query-n :stationid "GHCND:AJ000037985"))
 
+(redir "daily-data"
+(pp/pprint
+  (query-cdo-full-depaginated-results
+    :datatypes
+    {:datasetid "GHCND"})))
+
 ; TODO no wifi
 ; (def prom (query-cdo :data query-l))
 ; (redir "yearly-sample"
@@ -81,21 +87,19 @@
 ; (redir "stable-data"
 ;         (pp/pprint monthly-data))
 
-; TODO XXX regenerate data for d3
-; (redir "la-data"
-;        (pp/pprint
-; (->> "Los Angeles, California"
-;      (find-nearest-station query-n) ; find a station
-;      :id
-;      (assoc query-d
-;             :limit (* 5 12 10)
-;             :offset 0
-;             :stationid) 
-;      (query-cdo :data) 
-;      unpack-http-kit-json-res ; parse the response
-;      :results 
-;      group-results)
-;          ))
+ (redir "la-data2"
+        (pp/pprint
+ (->> "Los Angeles, California"
+      (find-nearest-station query-n) ; find a station
+      :id
+      (assoc query-d
+             :limit (* 5 12 10)
+             :offset 0
+             :stationid) 
+      (query-cdo :data) 
+      unpack-http-kit-json-res ; parse the response
+      :results )
+          ))
 
 
 
@@ -217,7 +221,8 @@
 ;              unpack-http-kit-json-res
 ;              (get-in [:results 0] )
 ;              fuzzy-bound-geocode-loc
-;              window-to-gmaps-url)})
+;
+;
 
 ; (redir "all-datatypes"
 ;        (pp/pprint

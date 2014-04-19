@@ -13,6 +13,10 @@ var monthDictionary = {
     11: "Dec"
 };
 
+function isOdd(n) {
+    return (n % 2) == 1;
+}
+
 function formatMonths(d) {
     return monthDictionary[d]
 }
@@ -26,6 +30,64 @@ var formatNumber = d3.format(".1f");
 
 function ncdcToFahrenheit(ncdc) {
     return ((9*ncdc)/50) + 32;
+}
+
+function appendLabel(svg) {
+    var cityAndState = "Los Angeles, CA";
+    var latAndLong = "43\u00B0N 37\u00B0W";
+    var climate = "Temperate Climate";
+    var flavorText = "300 Days of Sunshine";
+    var url = "wby.com/LosAngelesCA";
+
+    var label = svg.append("g")
+        .classed("label", true)
+        .attr("transform", "translate(680, 290)");
+
+    var labelBody = label.append("foreignObject")
+        .attr("width", 500)
+        .attr("height", 500)
+        .append("xhtml:body")
+        .append("span")
+        .style("display", "inline-block")
+        .style("text-align", "center");
+
+    // TODO templates
+    bodyString = 
+        '<div class="labeltop">' +
+            cityAndState + '<br/>' +
+            latAndLong + 
+        '</div>' +
+        // '<hr/>' +
+        '<div class="labelmid">' +
+            climate + '<br/>' + 
+            flavorText +
+        "</div>" +
+        // '<hr/>' +
+        '<div class="labelbot">' +
+            '<a href="' + url + '">' + url + '</a>' +
+        "</div>";
+
+    labelBody.append("div")
+        .html(bodyString);
+
+//    labelBody.append("h3")
+//        .html(cityAndState);
+//
+//    labelBody.append("h4")
+//        .html(latAndLong);
+//
+//    labelBody.append("hr");
+//
+//    labelBody.append("h6")
+//        .html(climate);
+//
+//    labelBody.append("h6")
+//        .html(flavorText);
+//
+//    labelBody.append("hr");
+//
+//    labelBody.append("a")
+//        .html(url);
 }
 
 function init() {
@@ -80,8 +142,13 @@ function init() {
             .attr("class", "y axis")
             .call(yAxis);
 
-        gy.selectAll("g").filter(function(d) { return d; })
+        gy.selectAll("g")
+            .filter(function(d) { return d; })
             .classed("minor", true);
+
+        gy.selectAll("g")
+            .filter(function(d) { return d === 0; })
+            .classed("major", true);
 
         gy.selectAll("text")
             .attr("x", -yAxisTextOffset)
@@ -98,6 +165,8 @@ function init() {
             .attr("class", "x axis")
             .attr("transform", "translate(0," + height + ")")
             .call(xAxis);
+        
+        gx.filter(isOdd).classed("odd", true);
 
         gx.selectAll("text")
             .attr("x", barWidth/2)
@@ -112,11 +181,11 @@ function init() {
         var bucketEnter =
             bucket.enter()
             .append("g")
+            .classed("bucket", true)
             .attr("transform", function(d) {
                 return "translate(" + x(d.key) + ",0)";
             })
             .append("g")
-            .attr("class", "bucket")
             // Center on middle of bar..
             .attr("transform", function(d) {
                 return "translate(" + barSpace/2 + ",0)";
@@ -151,6 +220,9 @@ function init() {
           .attr("x1", 0)
           .attr("x2", 0)
           .attr("stroke-dasharray", "3, 2");
+
+        bucket.filter(function (d) {return isOdd(d.key); })
+            .classed("odd", true);
 
         bucket.selectAll(".whisker-line.top")
           .attr("y1", function (d) {
@@ -190,43 +262,7 @@ function init() {
               return y(d.value.EMNT);
           });
 
-    var cityAndState = "Los Angeles, CA";
-    var latAndLong = "43\u00B0N 37\u00B0W";
-    var climate = "Arid Climate";
-    var flavorText = "300 Days of Sunshine";
-    var url = "www.annual-weather.com/LosAngelesCA";
-
-    var label = svg.append("g")
-        .classed("label", true)
-        .attr("transform", "translate(50, 50)");
-
-    var labelBody = label.append("foreignObject")
-        .attr("width", 480)
-        .attr("height", 500)
-        .append("xhtml:body")
-        .style("text-align", "center");
-
-//         .style("font", "14px 'Helvetica Neue'")
-//         .html("HTML recipe");
-
-    labelBody.append("h3")
-        .html(cityAndState);
-
-    labelBody.append("h4")
-        .html(latAndLong);
-
-    labelBody.append("hr");
-
-    labelBody.append("h6")
-        .html(climate);
-
-    labelBody.append("h6")
-        .html(flavorText);
-
-    labelBody.append("hr");
-
-    labelBody.append("a")
-        .html(url);
+        appendLabel(svg);
 
     });
 }

@@ -1,6 +1,7 @@
 Allows 1000 requests per diem.  With a bit of caching on your end, this sound slike plenty to get off the gorund.
 
 The token is supposed to be passed in the header but I cannot figure out how!
+    I figured out how !
 
 GHCNDMS is monthly summaries, EMNT, EMXT, MMNT, MMXT, and MNTM may be enough to build your dat?
     > Is MNTM bounded by MMXT and MMNT?
@@ -46,4 +47,32 @@ Scale on the side vs on the plot ?
 TODO axis labels, or labels on chart?  Convert labeling to F (or optional C?)
 Month labels on bottom?
 Well-designed labels about location?
+
+    -20 to 120 is not a bad range
+    I like the line axes but they are a wee bit noisy ATM, need to make less bold
+    5, 10, or 20 degree F seems good
+    Need to add sexy label in bottom corner... if it fits ?
+    Try to fit it a few places?  Clever.
+
+    Animate in chart onces data arrives?  Like a badass?
+    Make labels noninvasive?
+    Need to make axes and chart not bump heads
+    Do we make chart fill to page if it's not print layout ?
+
 Try out weekly chart ?
+    GHCNDMS dataset is monthly data.
+    You could probably reassemble weekly from GHCND (daily summaries)
+TODO polish up LA design to be servable
+    Make the LA label based off padding from the bottom right corner ?
+    Hide every other line with a fancy filter + class ?
+    TODO produce 15 different variants
+        with different stroking, fading, etc ?
+        print out the components you need and line them up ?
+        Hack it up inbrowser ?
+            Right now, the month labels don't match up well with the plots
+            Move labels ?
+            Vertical lines ?
+            ! Color Alternation ! With Plots !
+
+Get page dimensions set for serving and print CSS ?
+Probe list of cities

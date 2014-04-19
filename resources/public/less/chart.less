@@ -40,6 +40,40 @@
     stroke-width: 2;
 }
 
+@middle-stroke-color: #7B8B98;
+@box-fill-color: #7C8479;
+@box-stroke-color: #575040;
+@whisker-stroke-color: #373632;
+@whisker-end-stroke-color: #524346;
+
+@odd-middle-stroke-color: #753D56;
+@odd-box-fill-color: #9FBA91;
+@odd-box-stroke-color: #F6F8B7;
+@odd-whisker-stroke-color: #DC8FAF;
+@odd-whisker-end-stroke-color: #437C76;
+
+.bucket.odd .middle {
+    stroke: @odd-middle-stroke-color;
+}
+
+.bucket.odd .box {
+    fill: @odd-box-fill-color;
+    stroke: @odd-middle-stroke-color;
+}
+
+.bucket.odd .whisker-line {
+    stroke: @odd-whisker-stroke-color;
+}
+
+.bucket.odd .whisker-end {
+    stroke: @odd-whisker-end-stroke-color;
+}
+
+
+.axis {
+  font-family:"Trebuchet MS", Helvetica, sans-serif
+}
+
 .axis path {
   display: none;
 }
@@ -50,11 +84,39 @@
 }
 
 .axis .minor line {
+  visibility: hidden;
   stroke: #777;
   stroke-dasharray: 2,2;
+}
+
+.axis .major line {
+  visibility: hidden;
+  stroke: #777;
+  stroke-dasharray: 2,5;
 }
 
 .axis .hidden line {
   visibility: hidden;
 }
 
+@font-face {
+    font-family: MissionScript;
+    src: url("/otf/Mission-Script.otf") format("opentype");
+}
+
+.label {
+  font-family: "MissionScript", sans-serif;
+}
+
+.labeltop {
+  font-size: 185%;
+}
+
+.labelmid {
+  font-size: 150%;
+}
+
+
+.labelbot {
+  font-size: 120%;
+}
