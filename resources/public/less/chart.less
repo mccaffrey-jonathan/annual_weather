@@ -1,17 +1,10 @@
+/* TODO add more color schemes for different climates */
 
-/*
-@blue: #3559B1;
-@purple: #8C35B1;
-@brown: #B16B35;
-@tan: #AFB135;
-@green: #35B158;
-
-@middle-stroke-color: @purple;
-@box-fill-color: @tan;
-@box-stroke-color: @green;
-@whisker-stroke-color: @blue;
-@whisker-end-stroke-color: @purple;
-*/
+@odd-middle-stroke-color: #753D56;
+@odd-box-fill-color: #9FBA91;
+@odd-box-stroke-color: #F6F8B7;
+@odd-whisker-stroke-color: #DC8FAF;
+@odd-whisker-end-stroke-color: #437C76;
 
 @middle-stroke-color: #7B8B98;
 @box-fill-color: #7C8479;
@@ -24,6 +17,10 @@
     stroke-width: 3;
 }
 
+.hover-bg {
+    opacity: 0;
+}
+
 .box {
     fill: @box-fill-color;
     stroke: @box-stroke-color;
@@ -32,6 +29,7 @@
 
 .whisker-line {
     stroke: @whisker-stroke-color;
+    stroke-dasharray: 3,2;
     stroke-width: 1;
 }
 
@@ -39,18 +37,6 @@
     stroke: @whisker-end-stroke-color;
     stroke-width: 2;
 }
-
-@middle-stroke-color: #7B8B98;
-@box-fill-color: #7C8479;
-@box-stroke-color: #575040;
-@whisker-stroke-color: #373632;
-@whisker-end-stroke-color: #524346;
-
-@odd-middle-stroke-color: #753D56;
-@odd-box-fill-color: #9FBA91;
-@odd-box-stroke-color: #F6F8B7;
-@odd-whisker-stroke-color: #DC8FAF;
-@odd-whisker-end-stroke-color: #437C76;
 
 .bucket.odd .middle {
     stroke: @odd-middle-stroke-color;
@@ -69,11 +55,84 @@
     stroke: @odd-whisker-end-stroke-color;
 }
 
-
 .axis {
-  font-family:"Trebuchet MS", Helvetica, sans-serif
+  font-family:"Trebuchet MS", Helvetica, sans-serif;
 }
 
+.axis text.odd {
+    fill: @odd-box-fill-color;
+}
+
+.axis text.even {
+    fill: @box-fill-color;
+}
+
+/* Bucket hover effects */
+/* TODO fade out label and fade month axis appropriately
+   when corresponding box-and-whisker is :hover'ed */
+.bucket .bucket-label
+{
+    opacity: 0;
+}
+
+.bucket:hover .bucket-label
+{
+    opacity: 1;
+}
+
+.bucket
+{
+    opacity: 1;   
+    -webkit-transition: all 0.25s ease-out;
+    transition: all 0.25s ease-out;
+}
+
+.buckets:hover > .bucket:not(:hover)
+{
+    opacity: 0.25;   
+    -webkit-transition: all 0.5s ease-out;
+    transition: all 0.5s ease-out;
+}
+
+/* Styling for bucket and text */
+.bucket-label {
+  pointer-events: none;
+}
+
+text.bucket-label {
+  font-family:"Trebuchet MS", Helvetica, sans-serif;
+}
+
+line.bucket-label  {
+    stroke-width: 1;
+    stroke-dasharray: 3,5;
+}
+
+line.bucket-label.extreme-max,line.bucket-label.extreme-min {
+    stroke: @whisker-end-stroke-color;
+}
+
+line.bucket-label.mean-max,line.bucket-label.mean-min {
+    stroke: @box-stroke-color;
+}
+
+line.bucket-label.mean  {
+    stroke: @middle-stroke-color;
+}
+
+.odd line.bucket-label.extreme-max,.odd line.bucket-label.extreme-min {
+    stroke: @odd-whisker-end-stroke-color;
+}
+
+.odd line.bucket-label.mean-max,.odd line.bucket-label.mean-min {
+    stroke: @odd-box-stroke-color;
+}
+
+.odd line.bucket-label.mean  {
+    stroke: @odd-middle-stroke-color;
+}
+
+/* Styling for axes and their text */
 .axis path {
   display: none;
 }
@@ -99,6 +158,8 @@
   visibility: hidden;
 }
 
+
+/* Styling and sizing for label in corner */
 @font-face {
     font-family: MissionScript;
     src: url("/otf/Mission-Script.otf") format("opentype");
@@ -115,7 +176,6 @@
 .labelmid {
   font-size: 150%;
 }
-
 
 .labelbot {
   font-size: 120%;

@@ -16,25 +16,18 @@
         [clj-utils.core]
         [uncomplicate.fluokitten core jvm]))
 
+; TODO make dynamic, looking back
 (def query-dates
   {:startdate "1995-01-01"
   :enddate   "2005-01-01" })
 
-(def query-data-type-and-set
+(def query-d
   {:datatypeid ["EMNT" "EMXT" "MMNT" "MMXT" "MNTM"]
    :datasetid "GHCNDMS"})
 
 (defn query-first-n-results [n]
   {:limit (* 5 12 5)
    :offset 0})
-
-(def query-d
-  "For a given city, this dataset appears to be an array of maps, each
-  conrtaining one datapoint.  The datapoints move through all
-  cateugories for a date, then advance"
-  (merge
-    query-dates
-    query-data-type-and-set))
 
 (def query-n
   "For a given city, this dataset appears to be an array of maps, each
@@ -51,11 +44,11 @@
 
 (def query-l (assoc query-n :stationid "GHCND:AJ000037985"))
 
-(redir "daily-data"
-(pp/pprint
-  (query-cdo-full-depaginated-results
-    :datatypes
-    {:datasetid "GHCND"})))
+; (redir "daily-datatypes"
+; (pp/pprint
+;   (query-cdo-full-depaginated-results
+;     :datatypes
+;     {:datasetid "GHCND"})))
 
 ; TODO no wifi
 ; (def prom (query-cdo :data query-l))

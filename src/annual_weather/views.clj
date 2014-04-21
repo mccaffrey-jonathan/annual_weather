@@ -15,6 +15,8 @@
                  "http://code.jquery.com/jquery-1.11.0.min.js"
                  ; TODO don't use client-side LESS in production
                  "http://cdnjs.cloudflare.com/ajax/libs/less.js/1.6.3/less.min.js"
+                 ; TODO use production version
+                 "js/underscore.js"
                  "js/main.js")]
     [:body
      [:div {:class "result"}]]))

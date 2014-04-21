@@ -62,6 +62,9 @@ Well-designed labels about location?
 Try out weekly chart ?
     GHCNDMS dataset is monthly data.
     You could probably reassemble weekly from GHCND (daily summaries)
+        Not really an average temperature ?  You could use multi-day maximum for the extre bounds ?
+
+
 TODO polish up LA design to be servable
     Make the LA label based off padding from the bottom right corner ?
     Hide every other line with a fancy filter + class ?
@@ -76,3 +79,10 @@ TODO polish up LA design to be servable
 
 Get page dimensions set for serving and print CSS ?
 Probe list of cities
+
+!!! TODO: about link with explanation of bars and link and explanation 
+of NCDC API format and your use.
+! TODO fade in additional axes marks when hovering with lines ?
+!! TODO hover for touchscreen devices with finger over
+    Fade in tooltip or pulse to indicate an action ?
+
