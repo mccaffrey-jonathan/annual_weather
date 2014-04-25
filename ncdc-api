@@ -80,9 +80,30 @@ TODO polish up LA design to be servable
 Get page dimensions set for serving and print CSS ?
 Probe list of cities
 
+# Design/Front-End TODO ?
 !!! TODO: about link with explanation of bars and link and explanation 
 of NCDC API format and your use.
 ! TODO fade in additional axes marks when hovering with lines ?
 !! TODO hover for touchscreen devices with finger over
     Fade in tooltip or pulse to indicate an action ?
+!! TODO try in half-a-dozen browser sizes to get layout happy
+! TODO make label size relative to screen-size ?
+! TODO Highlight months on axis with bars
+
+What do we need to do to serve real datas ?
+If we are seeing modest load, collect statistics about lookups and density for each of these layers.
+    Layers for caching:
+    Option
+        Geocoding
+            Addr string to address component/bounds thingies
+        Station Lookups
+            Lookup similar bounds ?
+                Maybe store bounds as points located at center ?
+                Look up by a small sub-rect
+    Also: Geocode -> station cache ?
+
+    station+query->weather cache
+        Yearly expiration date ?
+
+
 
