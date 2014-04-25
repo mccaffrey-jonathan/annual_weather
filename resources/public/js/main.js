@@ -52,7 +52,7 @@ function ncdcToFahrenheitStr(accessor) {
     }
 }
 
-function appendLabel(svg) {
+function appendLabel(svg, ww, wh) {
     var cityAndState = "Los Angeles, CA";
     var latAndLong = "43\u00B0N 37\u00B0W";
     var climate = "Temperate Climate";
@@ -61,7 +61,11 @@ function appendLabel(svg) {
 
     var label = svg.append("g")
         .classed("label", true)
-        .attr("transform", "translate(680, 290)");
+        .attr("transform", "translate(" +
+                (ww - 350).toString() +
+                ", " +
+                (wh - 250).toString() +
+                ")");
 
     var labelBody = label.append("foreignObject")
         .attr("width", 500)
@@ -294,7 +298,12 @@ function appendBuckets(svg, data, x, y, barWidth, barSpace) {
 
 function init() {
 
-    $.get("data", function(data) {
+    // $.get("data", function(data) {
+    $.ajax({
+        url: "search",
+        type: "get",
+        data: {q: "Ithaca, CA"},
+        success: function (data) {
 
         // Convert strings to numbers.
         data.forEach(function(d) {
@@ -306,13 +315,23 @@ function init() {
             d.value.EMNT = ncdcToFahrenheit(d3.mean(d.value.EMNT));
         });
 
+        var body = document.body,
+            html = document.documentElement;
+
+        var windowHeight = Math.max( body.scrollHeight, body.offsetHeight, 
+            html.clientHeight, html.scrollHeight, html.offsetHeight );
+
+        var windowWidth = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
+
         // TODO start graph setup async from data fetching
         // $(".result").html(JSON.stringify(data));
 
         var yAxisTextOffset = 45,
             margin = {top: 20, right: 40, bottom: 30, left: yAxisTextOffset},
-            width = 960 - margin.left - margin.right,
-            height = 500 - margin.top - margin.bottom,
+           // width = 960 - margin.left - margin.right,
+            width = windowWidth - margin.left - margin.right,
+            // height = 500 - margin.top - margin.bottom,
+            height = windowHeight - margin.top - margin.bottom,
             barSpace = Math.floor(width / data.length) - 1,
             barWidth = (3*barSpace)/4;
 
@@ -382,9 +401,8 @@ function init() {
             .classed("hidden", true);
 
         appendBuckets(svg, data, x, y, barWidth, barSpace);
-        appendLabel(svg);
-
-    });
+        appendLabel(svg, windowWidth, windowHeight);
+    }});
 }
 
 $(document).ready(init);

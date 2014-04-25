@@ -44,5 +44,12 @@
         (recur grown-results
                (+ limit offset))))))
 
+(defn query-stations-uncached [query gmaps-extent]
+  (query-cdo-full-depaginated-results
+    :stations
+    (assoc query :extent gmaps-extent)))
+
+(def query-stations query-stations-uncached)
+
 ; NOTE data query without any station qualifiers times out
 ; Note, data returned is in 10ths of a degree celsius

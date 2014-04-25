@@ -16,7 +16,7 @@
         [clj-utils.core]
         [uncomplicate.fluokitten core jvm]))
 
-; TODO make dynamic, looking back
+; TODO make dynamic, retrospective from date
 (def query-dates
   {:startdate "1995-01-01"
   :enddate   "2005-01-01" })
@@ -26,7 +26,8 @@
    :datasetid "GHCNDMS"})
 
 (defn query-first-n-results [n]
-  {:limit (* 5 12 5)
+  ; TODO why does this lie
+  {:limit (* 5 12 10)
    :offset 0})
 
 (def query-n
@@ -34,6 +35,7 @@
   conrtaining one datapoint.  The datapoints move through all
   cateugories for a date, then advance"
   (merge
+    query-dates
     query-d
     (query-first-n-results (* 5 12 10))))
 
@@ -63,14 +65,13 @@
 ; (def zips (query-cdo :locations {:locationcategoryid "ZIP"}))
 ; Location ID's are represent like ZIP:XXXXX
 
-(def mock-data true)
-(def monthly-data 
-  (if mock-data
-    (read-string (slurp "la-data-d3"))
-    (unpack-http-kit-json-res (query-cdo :data query-l))))
-
-(defn api-handler []
-  monthly-data)
+(def->> data-for-human-location
+  (find-nearest-station query-n) ; find a station
+  :id 
+  (assoc query-n :stationid)
+  (query-cdo :data) ; Ask for weather data
+  unpack-http-kit-json-res ; parse the response
+  :results)
 
 (defn groups-to-d3-style
   [gs]
@@ -80,20 +81,20 @@
 ; (redir "stable-data"
 ;         (pp/pprint monthly-data))
 
- (redir "la-data2"
-        (pp/pprint
- (->> "Los Angeles, California"
-      (find-nearest-station query-n) ; find a station
-      :id
-      (assoc query-d
-             :limit (* 5 12 10)
-             :offset 0
-             :stationid) 
-      (query-cdo :data) 
-      unpack-http-kit-json-res ; parse the response
-      :results )
-          ))
-
+;  (redir "la-data2"
+;         (pp/pprint
+;  (->> "Los Angeles, California"
+;       (find-nearest-station query-n) ; find a station
+;       :id
+;       (assoc query-d
+;              :limit (* 5 12 10)
+;              :offset 0
+;              :stationid) 
+;       (query-cdo :data) 
+;       unpack-http-kit-json-res ; parse the response
+;       :results )
+;           ))
+; 
 
 
 ; TODO is there a builtin for this?
@@ -131,9 +132,6 @@
   (apply merge-with +
          (for [[bucket g] gs]
            {(count (filter (fn [[k v]] (not (empty? v))) g)) 1})))
-
-(defn json-weather-data []
-  (group-results (monthly-data :results)))
 
 (defn just-if-not-nil
   [x]
@@ -175,7 +173,6 @@
 ;              {:locationcategoryid "CITY"}))
 ;
 ;
-
 
 ; (redir "la-stations"
 ;        (pp/pprint
@@ -256,3 +253,29 @@
 ;    "maxdate" "2004-05-01"}
 
 ;(redir "trim-monthly" ;       (pp/pprint monthly-stations))
+;
+
+(def mock-data false)
+; (def monthly-data 
+;   (if mock-data
+;     (read-string (slurp "la-data-d3"))
+;     (-> "Los Angeles, CA"
+;         data-for-human-location
+;         group-results
+;         groups-to-d3-style)))
+
+(defn api-handler []
+  (if mock-data
+    (read-string (slurp "la-data-d3"))
+    (-> "San Jose, CA"
+        data-for-human-location
+        group-results
+        groups-to-d3-style)))
+
+; TODO handle errors more pleasantly
+; Catch exceptions and serve up a nice response
+(def-> search-handler
+  ((fn [s] (println s) s) )
+  data-for-human-location
+  group-results
+  groups-to-d3-style)

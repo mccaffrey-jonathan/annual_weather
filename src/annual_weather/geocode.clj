@@ -12,12 +12,14 @@
 (def-> unpack-geocode
   deref)
 
-(defn query-geocode [q]
+(defn query-geocode-uncached [q]
   (http/get
     "http://maps.googleapis.com/maps/api/geocode/json"
     {:query-params
      {:address q
       :sensor false }}))
+
+(def query-geocode query-geocode-uncached)
 
 ; TODO does this work outside of NW demi-sphere?
 (defn window-to-gmaps-url
@@ -125,8 +127,7 @@
         stations (->> geocode-loc
                       fuzzy-bound-geocode-loc
                       window-to-gmaps-url
-                      (assoc query :extent)
-                      (query-cdo-full-depaginated-results :stations))]
+                      (query-stations query))]
         (find-closest-to-geocode geocode-loc stations)))
 
 ; (-> "Skaneateles NY"
