@@ -102,13 +102,7 @@ function remeasureLabel(svg, chartDims) {
         .html(bodyString);
 }
 
-// TODO Make these construction functions 
-// more declarative and less directly append-ative
-// For example, this probably won't support re-size or re-layout well.
-// Which is important to you.
-//
-// But first get this thing off the ground
-function updateBuckets(buckets, dims, data) {
+function remeasureBuckets(buckets, dims) {
 
     // TODO use dims directly
     var x = dims.x,
@@ -120,25 +114,19 @@ function updateBuckets(buckets, dims, data) {
     // or are we just calculating sizes wrong?
     // To find out you could draw the boxes with color bg
     var textSpaceFromBucket = 5,
-        textSpaceFromBarSide = 5,
-        hoverRectPad = 5,
+        textSpaceFromBarSide = 5, hoverRectPad = 5,
         centerTextInColumn = centerTextInColumnOfWidth(barSpace);
 
-    var bucket = buckets.selectAll(".bucket").data(data);
-
-    var bucketEnter = bucket.enter()
-        .append("g")
-        .classed("bucket", true)
-        .attr("transform", function(d) {
+    var bucket = buckets.selectAll(".bucket");
+    bucket.attr("transform", function(d) {
             return "translate(" + x(d.key) + ",0)";
         })
-        .append("g")
-        // Center on middle of bar..
+
+    bucket.selectAll("g")
         .attr("transform", function(d) {
             return "translate(" + barSpace/2 + ",0)";
         });
 
-    bucketEnter.append("rect").attr("class", "hover-bg");
     bucket.select(".hover-bg")
       .attr("width", barSpace+2*hoverRectPad)
       .attr("height", function (d) {
@@ -149,20 +137,6 @@ function updateBuckets(buckets, dims, data) {
           return y(d.value.EMXT);
       });
 
-    [
-        "extreme-max",
-        "extreme-min",
-        "mean-max",
-        "mean-min",
-        "mean",
-    ].forEach(function(classes) {
-        bucketEnter.append("text")
-          .attr("class", "bucket-label " + classes);
-        bucketEnter.append("line")
-          .attr("class", "bucket-label " + classes);
-    });
-
-    bucketEnter.append("rect").attr("class", "box");
     bucket.select(".box")
       .attr("width", barWidth)
       .attr("height", function (d) {
@@ -174,7 +148,6 @@ function updateBuckets(buckets, dims, data) {
       });
 
     // TODO these pinch over the rect stroke a bit...
-    bucketEnter.append("line").attr("class", "middle");
     bucket.select(".middle")
       .attr("x1", -barWidth/2)
       .attr("x2", barWidth/2)
@@ -185,8 +158,6 @@ function updateBuckets(buckets, dims, data) {
           return y(d.value.MNTM);
       });
 
-    bucketEnter.append("line").attr("class", "whisker-line top");
-    bucketEnter.append("line").attr("class", "whisker-line bot");
     bucket.selectAll(".whisker-line")
       .attr("x1", 0)
       .attr("x2", 0);
@@ -209,9 +180,6 @@ function updateBuckets(buckets, dims, data) {
       .attr("y2", function(d) {
           return y(d.value.EMNT);
       });
-
-    bucketEnter.append("line").attr("class", "whisker-end top");
-    bucketEnter.append("line").attr("class", "whisker-end bot");
 
     bucket.selectAll(".whisker-end")
       .attr("x1", -barSpace/4)
@@ -270,38 +238,49 @@ function updateBuckets(buckets, dims, data) {
     setBucketLabelTemp(d3.selectAll(".mean"), function (d) {
         return d.value.MNTM;
     });
+}
+
+function updateBuckets(buckets,  data) {
+    var bucket = buckets.selectAll(".bucket").data(data);
+
+    var bucketEnter = bucket.enter()
+        .append("g")
+        .classed("bucket", true)
+        .append("g");
+
+    bucketEnter.append("rect").attr("class", "hover-bg");
+    bucketEnter.append("rect").attr("class", "box");
+    bucketEnter.append("line").attr("class", "middle");
+    bucketEnter.append("line").attr("class", "whisker-line top");
+    bucketEnter.append("line").attr("class", "whisker-line bot");
+    bucketEnter.append("line").attr("class", "whisker-end top");
+    bucketEnter.append("line").attr("class", "whisker-end bot");
+
+    [
+        "extreme-max",
+        "extreme-min",
+        "mean-max",
+        "mean-min",
+        "mean",
+    ].forEach(function(classes) {
+        bucketEnter.append("text")
+          .attr("class", "bucket-label " + classes);
+        bucketEnter.append("line")
+          .attr("class", "bucket-label " + classes);
+    });
 
     buckets.classed("animate-in", false);
     buckets.classed("animate-in", true);
     
-    // var emntLabelSel = bucket.select(".extreme-min.bucket-label")
-    //     .text(function (d) {
-    //         return formatFahrenheit(formatNumberNoDecimal(d.value.EMNT));
-    //     });
-
-    // emntLabelSel.style("opacity", 0);
-    // var bbox = emntLabelSel[0][0].getBBox(),
-    //     emntLabelHeight = bbox.height;
-    // emntLabelSel.style("opacity", 1);
-
-    // emntLabelSel.attr("y", function (d) {
-    //     return y(d.value.EMNT);
-    // })
-
 }
 
 function remeasureChart(cb) {
     var body = document.body,
         html = document.documentElement;
 
-    var windowHeight = Math.max( body.scrollHeight, body.offsetHeight, 
-        html.clientHeight, html.scrollHeight, html.offsetHeight );
-
-    var windowWidth = window.innerWidth ||
-        document.documentElement.clientWidth ||
-        document.body.clientWidth;
-
-    var numBuckets = 12,
+    var windowHeight = $(window).height(),
+        windowWidth = $(window).width(),
+        numBuckets = 12,
         yAxisTextOffset = 45,
         margin = {top: 20, right: 40, bottom: 30, left: yAxisTextOffset},
        // width = 960 - margin.left - margin.right,
@@ -427,7 +406,8 @@ function onPageLoad() {
     }, function (err, res) {
         var svg = d3.select('.result svg');
         var buckets = svg.select('g.buckets');
-        updateBuckets(buckets, res.chartDims, res.data);
+        updateBuckets(buckets, res.data);
+        remeasureBuckets(buckets, res.chartDims);
         remeasureLabel(svg, res.chartDims);
 
         d3.selectAll('.result svg .axis text')
@@ -438,5 +418,16 @@ function onPageLoad() {
     });
 }
 
+function onPageResize() {
+    async.series({
+        chartDims: remeasureChart,
+    }, function (err, res) {
+        var svg = d3.select('.result svg');
+        var buckets = svg.select('g.buckets');
+        remeasureBuckets(buckets, res.chartDims);
+        remeasureLabel(svg, res.chartDims);
+    });
+}
+
 $(document).ready(onPageLoad);
-$(window).resize( );
+$(window).resize(onPageResize);

@@ -17,7 +17,8 @@
                  "http://cdnjs.cloudflare.com/ajax/libs/less.js/1.6.3/less.min.js"
                  ; TODO use production version
                  "js/underscore.js"
-                 "js/main.js")]
+                 "js/main.js"
+                 "js/async.js")]
     [:body
      [:div {:class "result"}]]))
 
