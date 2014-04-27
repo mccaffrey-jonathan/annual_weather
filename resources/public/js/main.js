@@ -64,7 +64,7 @@ function appendLabel(svg, ww, wh) {
         .attr("transform", "translate(" +
                 (ww - 350).toString() +
                 ", " +
-                (wh - 250).toString() +
+                (wh - 225).toString() +
                 ")");
 
     var labelBody = label.append("foreignObject")
@@ -120,7 +120,13 @@ function appendLabel(svg, ww, wh) {
 // Which is important to you.
 //
 // But first get this thing off the ground
-function appendBuckets(svg, data, x, y, barWidth, barSpace) {
+function updateBuckets(buckets, dims, data) {
+
+    // TODO use dims directly
+    var x = dims.x,
+        y = dims.y,
+        barWidth = dims.barWidth,
+        barSpace = dims.barSpace;
 
     // TODO do we really need the padding for box hit-detection
     // or are we just calculating sizes wrong?
@@ -130,12 +136,9 @@ function appendBuckets(svg, data, x, y, barWidth, barSpace) {
         hoverRectPad = 5,
         centerTextInColumn = centerTextInColumnOfWidth(barSpace);
 
-    var bucket = svg.append("g").classed("buckets", true)
-        .selectAll(".bucket")
-        .data(data);
+    var bucket = buckets.selectAll(".bucket").data(data);
 
-    var bucketEnter =
-        bucket.enter()
+    var bucketEnter = bucket.enter()
         .append("g")
         .classed("bucket", true)
         .attr("transform", function(d) {
@@ -279,6 +282,9 @@ function appendBuckets(svg, data, x, y, barWidth, barSpace) {
     setBucketLabelTemp(d3.selectAll(".mean"), function (d) {
         return d.value.MNTM;
     });
+
+    buckets.classed("animate-in", false);
+    buckets.classed("animate-in", true);
     
     // var emntLabelSel = bucket.select(".extreme-min.bucket-label")
     //     .text(function (d) {
@@ -296,113 +302,237 @@ function appendBuckets(svg, data, x, y, barWidth, barSpace) {
 
 }
 
-function init() {
+function updateChart(cb) {
+    var body = document.body,
+        html = document.documentElement;
 
-    // $.get("data", function(data) {
+    var windowHeight = Math.max( body.scrollHeight, body.offsetHeight, 
+        html.clientHeight, html.scrollHeight, html.offsetHeight );
+
+    var windowWidth = window.innerWidth ||
+        document.documentElement.clientWidth ||
+        document.body.clientWidth;
+
+    var numBuckets = 12,
+        yAxisTextOffset = 45,
+        margin = {top: 20, right: 40, bottom: 30, left: yAxisTextOffset},
+       // width = 960 - margin.left - margin.right,
+        width = windowWidth - margin.left - margin.right,
+        // height = 500 - margin.top - margin.bottom,
+        height = windowHeight - margin.top - margin.bottom,
+        barSpace = Math.floor(width / numBuckets) - 1,
+        barWidth = (3*barSpace)/4;
+
+    var centerTextInColumn = centerTextInColumnOfWidth(barSpace);
+
+    var x = d3.scale.linear()
+        .domain([0, 12])
+        .range([0, width]);
+
+    // Inverted range, Bigger is up
+    var y = d3.scale.linear()
+        .domain([-20, 120])
+        .range([height, 0]);
+
+    // An SVG element with a bottom-right origin.
+    var outerSvg = d3.select(".result svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom);
+
+    var svg = outerSvg.select('g')
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+    // tickSize width drives the ticks across the entire chart
+    var yAxis = d3.svg.axis()
+        .scale(y)
+        .ticks(20)
+        .tickSize(width)
+        .tickFormat(formatFahrenheit)
+        .orient("right");
+
+    var gy = svg.select("g.y.axis")
+        .call(yAxis);
+
+    gy.selectAll("g")
+        .filter(function(d) { return d; })
+        .classed("minor", true);
+
+    gy.selectAll("g")
+        .filter(function(d) { return d === 0; })
+        .classed("major", true);
+
+    gy.selectAll("text")
+        .attr("x", -yAxisTextOffset)
+        .attr("dy", 4);
+
+    var xAxis = d3.svg.axis()
+        .scale(x)
+        .tickSize(-height)
+        .tickSubdivide(true)
+        .tickFormat(formatMonths);
+
+    // Add the x-axis.
+    var gx = svg.select("g.x.axis")
+        .attr("transform", "translate(0," + height + ")")
+        .call(xAxis);
+    
+    gx.selectAll("text")
+        .filter(isEven).classed("even", true);
+    gx.selectAll("text")
+        .filter(isOdd).classed("odd", true);
+
+    gx.selectAll("text")
+        .call(centerTextInColumn);
+
+    gx.selectAll("g").filter(function(d) { return d; })
+        .classed("hidden", true);
+
+    appendLabel(svg, windowWidth, windowHeight);
+
+    cb(null, {
+        x: x,
+        y: y,
+        barWidth: barWidth,
+        barSpace: barSpace
+    });
+}
+
+function appendChart(cb) {
+    var body = document.body,
+        html = document.documentElement;
+
+    var windowHeight = Math.max( body.scrollHeight, body.offsetHeight, 
+        html.clientHeight, html.scrollHeight, html.offsetHeight );
+
+    var windowWidth = window.innerWidth ||
+        document.documentElement.clientWidth ||
+        document.body.clientWidth;
+
+    var numBuckets = 12,
+        yAxisTextOffset = 45,
+        margin = {top: 20, right: 40, bottom: 30, left: yAxisTextOffset},
+       // width = 960 - margin.left - margin.right,
+        width = windowWidth - margin.left - margin.right,
+        // height = 500 - margin.top - margin.bottom,
+        height = windowHeight - margin.top - margin.bottom,
+        barSpace = Math.floor(width / numBuckets) - 1,
+        barWidth = (3*barSpace)/4;
+
+    var centerTextInColumn = centerTextInColumnOfWidth(barSpace);
+
+    var x = d3.scale.linear()
+        .domain([0, 12])
+        .range([0, width]);
+
+    // Inverted range, Bigger is up
+    var y = d3.scale.linear()
+        .domain([-20, 120])
+        .range([height, 0]);
+
+    // An SVG element with a bottom-right origin.
+    var svg = d3.select(".result").append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+      .append("g")
+            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+    // tickSize width drives the ticks across the entire chart
+    var yAxis = d3.svg.axis()
+        .scale(y)
+        .ticks(20)
+        .tickSize(width)
+        .tickFormat(formatFahrenheit)
+        .orient("right");
+
+    var gy = svg.append("g")
+        .attr("class", "y axis")
+        .call(yAxis);
+
+    gy.selectAll("g")
+        .filter(function(d) { return d; })
+        .classed("minor", true);
+
+    gy.selectAll("g")
+        .filter(function(d) { return d === 0; })
+        .classed("major", true);
+
+    gy.selectAll("text")
+        .attr("x", -yAxisTextOffset)
+        .attr("dy", 4);
+
+    var xAxis = d3.svg.axis()
+        .scale(x)
+        .tickSize(-height)
+        .tickSubdivide(true)
+        .tickFormat(formatMonths);
+
+    // Add the x-axis.
+    var gx = svg.append("g")
+        .attr("class", "x axis")
+        .attr("transform", "translate(0," + height + ")")
+        .call(xAxis);
+    
+    gx.selectAll("text")
+        .filter(isEven).classed("even", true);
+    gx.selectAll("text")
+        .filter(isOdd).classed("odd", true);
+
+    gx.selectAll("text")
+        .call(centerTextInColumn);
+
+    gx.selectAll("g").filter(function(d) { return d; })
+        .classed("hidden", true);
+
+    appendLabel(svg, windowWidth, windowHeight);
+
+    svg.append("g").classed("buckets", true)
+
+    cb(null, {
+        x: x,
+        y: y,
+        barWidth: barWidth,
+        barSpace: barSpace
+    });
+}
+
+function loadData(cb) {
     $.ajax({
         url: "search",
         type: "get",
         data: {q: "Ithaca, CA"},
         success: function (data) {
 
-        // Convert strings to numbers.
-        data.forEach(function(d) {
-            d.key = +d.key;
-            d.value.MNTM = ncdcToFahrenheit(d3.mean(d.value.MNTM));
-            d.value.MMXT = ncdcToFahrenheit(d3.mean(d.value.MMXT));
-            d.value.MMNT = ncdcToFahrenheit(d3.mean(d.value.MMNT));
-            d.value.EMXT = ncdcToFahrenheit(d3.mean(d.value.EMXT));
-            d.value.EMNT = ncdcToFahrenheit(d3.mean(d.value.EMNT));
-        });
+            // Convert strings to numbers.
+            data.forEach(function(d) {
+                d.key = +d.key;
+                d.value.MNTM = ncdcToFahrenheit(d3.mean(d.value.MNTM));
+                d.value.MMXT = ncdcToFahrenheit(d3.mean(d.value.MMXT));
+                d.value.MMNT = ncdcToFahrenheit(d3.mean(d.value.MMNT));
+                d.value.EMXT = ncdcToFahrenheit(d3.mean(d.value.EMXT));
+                d.value.EMNT = ncdcToFahrenheit(d3.mean(d.value.EMNT));
+            });
 
-        var body = document.body,
-            html = document.documentElement;
-
-        var windowHeight = Math.max( body.scrollHeight, body.offsetHeight, 
-            html.clientHeight, html.scrollHeight, html.offsetHeight );
-
-        var windowWidth = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
-
-        // TODO start graph setup async from data fetching
-        // $(".result").html(JSON.stringify(data));
-
-        var yAxisTextOffset = 45,
-            margin = {top: 20, right: 40, bottom: 30, left: yAxisTextOffset},
-           // width = 960 - margin.left - margin.right,
-            width = windowWidth - margin.left - margin.right,
-            // height = 500 - margin.top - margin.bottom,
-            height = windowHeight - margin.top - margin.bottom,
-            barSpace = Math.floor(width / data.length) - 1,
-            barWidth = (3*barSpace)/4;
-
-        var centerTextInColumn = centerTextInColumnOfWidth(barSpace);
-
-        var x = d3.scale.linear()
-            .domain([0, 12])
-            .range([0, width]);
-
-        // Inverted range, Bigger is up
-        var y = d3.scale.linear()
-            .domain([-20, 120])
-            .range([height, 0]);
-
-        // An SVG element with a bottom-right origin.
-        var svg = d3.select(".result").append("svg")
-            .attr("width", width + margin.left + margin.right)
-            .attr("height", height + margin.top + margin.bottom)
-          .append("g")
-            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
-        // tickSize width drives the ticks across the entire chart
-        var yAxis = d3.svg.axis()
-            .scale(y)
-            .ticks(20)
-            .tickSize(width)
-            .tickFormat(formatFahrenheit)
-            .orient("right");
-
-        var gy = svg.append("g")
-            .attr("class", "y axis")
-            .call(yAxis);
-
-        gy.selectAll("g")
-            .filter(function(d) { return d; })
-            .classed("minor", true);
-
-        gy.selectAll("g")
-            .filter(function(d) { return d === 0; })
-            .classed("major", true);
-
-        gy.selectAll("text")
-            .attr("x", -yAxisTextOffset)
-            .attr("dy", 4);
-
-        var xAxis = d3.svg.axis()
-            .scale(x)
-            .tickSize(-height)
-            .tickSubdivide(true)
-            .tickFormat(formatMonths);
-
-        // Add the x-axis.
-        var gx = svg.append("g")
-            .attr("class", "x axis")
-            .attr("transform", "translate(0," + height + ")")
-            .call(xAxis);
-        
-        gx.selectAll("text")
-            .filter(isEven).classed("even", true);
-        gx.selectAll("text")
-            .filter(isOdd).classed("odd", true);
-
-        gx.selectAll("text")
-            .call(centerTextInColumn);
-
-        gx.selectAll("g").filter(function(d) { return d; })
-            .classed("hidden", true);
-
-        appendBuckets(svg, data, x, y, barWidth, barSpace);
-        appendLabel(svg, windowWidth, windowHeight);
-    }});
+            cb(null, data);
+        },
+        error: function (jqXhr, textStatus, errorThrown) {
+            cb(errorThrown, null);
+        }});
 }
 
-$(document).ready(init);
+function onPageLoad() {
+    async.parallel({
+        data: loadData,
+        chartDims: initChart,
+    }, function (err, res) {
+        var buckets = d3.select('.result svg g.buckets');
+        updateBuckets(buckets, res.chartDims, res.data);
+
+        d3.selectAll('.result svg .axis text')
+            .classed("animate-in", true);
+
+        d3.selectAll('.result svg .label')
+            .classed("animate-in", true);
+    });
+}
+
+$(document).ready(onPageLoad);
