@@ -52,28 +52,22 @@ function ncdcToFahrenheitStr(accessor) {
     }
 }
 
-function appendLabel(svg, ww, wh) {
+function appendLabel(svg) {
+    svg.append("g")
+        .classed("label", true)
+        .append("foreignObject")
+        .classed("war-foreign-object", true)
+        .append("xhtml:body")
+        .append("span")
+        .append("div");
+}
+
+function remeasureLabel(svg, chartDims) {
     var cityAndState = "Los Angeles, CA";
     var latAndLong = "43\u00B0N 37\u00B0W";
     var climate = "Temperate Climate";
     var flavorText = "300 Days of Sunshine";
     var url = "wby.com/LosAngelesCA";
-
-    var label = svg.append("g")
-        .classed("label", true)
-        .attr("transform", "translate(" +
-                (ww - 350).toString() +
-                ", " +
-                (wh - 225).toString() +
-                ")");
-
-    var labelBody = label.append("foreignObject")
-        .attr("width", 500)
-        .attr("height", 500)
-        .append("xhtml:body")
-        .append("span")
-        .style("display", "inline-block")
-        .style("text-align", "center");
 
     // TODO templates
     bodyString = 
@@ -91,27 +85,21 @@ function appendLabel(svg, ww, wh) {
             '<a href="' + url + '">' + url + '</a>' +
         "</div>";
 
-    labelBody.append("div")
-        .html(bodyString);
+    var label = svg.select("g.label")
+        .attr("transform", "translate(" +
+                (chartDims.windowWidth - 350).toString() +
+                ", " +
+                (chartDims.windowHeight - 225).toString() +
+                ")");
 
-//    labelBody.append("h3")
-//        .html(cityAndState);
-//
-//    labelBody.append("h4")
-//        .html(latAndLong);
-//
-//    labelBody.append("hr");
-//
-//    labelBody.append("h6")
-//        .html(climate);
-//
-//    labelBody.append("h6")
-//        .html(flavorText);
-//
-//    labelBody.append("hr");
-//
-//    labelBody.append("a")
-//        .html(url);
+    label.select(".war-foreign-object")
+        .attr("width", 500)
+        .attr("height", 500)
+        .select("body span")
+        .style("display", "inline-block")
+        .style("text-align", "center")
+        .select("div")
+        .html(bodyString);
 }
 
 // TODO Make these construction functions 
@@ -302,7 +290,7 @@ function updateBuckets(buckets, dims, data) {
 
 }
 
-function updateChart(cb) {
+function remeasureChart(cb) {
     var body = document.body,
         html = document.documentElement;
 
@@ -387,112 +375,24 @@ function updateChart(cb) {
     gx.selectAll("g").filter(function(d) { return d; })
         .classed("hidden", true);
 
-    appendLabel(svg, windowWidth, windowHeight);
-
     cb(null, {
         x: x,
         y: y,
         barWidth: barWidth,
-        barSpace: barSpace
+        barSpace: barSpace,
+        windowWidth: windowWidth,
+        windowHeight: windowHeight
     });
 }
 
-function appendChart(cb) {
-    var body = document.body,
-        html = document.documentElement;
+function appendChart() {
+    var svg = d3.select(".result").append("svg").append("g");
+    var gy = svg.append("g").attr("class", "y axis");
+    var gx = svg.append("g").attr("class", "x axis");
 
-    var windowHeight = Math.max( body.scrollHeight, body.offsetHeight, 
-        html.clientHeight, html.scrollHeight, html.offsetHeight );
-
-    var windowWidth = window.innerWidth ||
-        document.documentElement.clientWidth ||
-        document.body.clientWidth;
-
-    var numBuckets = 12,
-        yAxisTextOffset = 45,
-        margin = {top: 20, right: 40, bottom: 30, left: yAxisTextOffset},
-       // width = 960 - margin.left - margin.right,
-        width = windowWidth - margin.left - margin.right,
-        // height = 500 - margin.top - margin.bottom,
-        height = windowHeight - margin.top - margin.bottom,
-        barSpace = Math.floor(width / numBuckets) - 1,
-        barWidth = (3*barSpace)/4;
-
-    var centerTextInColumn = centerTextInColumnOfWidth(barSpace);
-
-    var x = d3.scale.linear()
-        .domain([0, 12])
-        .range([0, width]);
-
-    // Inverted range, Bigger is up
-    var y = d3.scale.linear()
-        .domain([-20, 120])
-        .range([height, 0]);
-
-    // An SVG element with a bottom-right origin.
-    var svg = d3.select(".result").append("svg")
-        .attr("width", width + margin.left + margin.right)
-        .attr("height", height + margin.top + margin.bottom)
-      .append("g")
-            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
-    // tickSize width drives the ticks across the entire chart
-    var yAxis = d3.svg.axis()
-        .scale(y)
-        .ticks(20)
-        .tickSize(width)
-        .tickFormat(formatFahrenheit)
-        .orient("right");
-
-    var gy = svg.append("g")
-        .attr("class", "y axis")
-        .call(yAxis);
-
-    gy.selectAll("g")
-        .filter(function(d) { return d; })
-        .classed("minor", true);
-
-    gy.selectAll("g")
-        .filter(function(d) { return d === 0; })
-        .classed("major", true);
-
-    gy.selectAll("text")
-        .attr("x", -yAxisTextOffset)
-        .attr("dy", 4);
-
-    var xAxis = d3.svg.axis()
-        .scale(x)
-        .tickSize(-height)
-        .tickSubdivide(true)
-        .tickFormat(formatMonths);
-
-    // Add the x-axis.
-    var gx = svg.append("g")
-        .attr("class", "x axis")
-        .attr("transform", "translate(0," + height + ")")
-        .call(xAxis);
-    
-    gx.selectAll("text")
-        .filter(isEven).classed("even", true);
-    gx.selectAll("text")
-        .filter(isOdd).classed("odd", true);
-
-    gx.selectAll("text")
-        .call(centerTextInColumn);
-
-    gx.selectAll("g").filter(function(d) { return d; })
-        .classed("hidden", true);
-
-    appendLabel(svg, windowWidth, windowHeight);
+    appendLabel(svg);
 
     svg.append("g").classed("buckets", true)
-
-    cb(null, {
-        x: x,
-        y: y,
-        barWidth: barWidth,
-        barSpace: barSpace
-    });
 }
 
 function loadData(cb) {
@@ -520,12 +420,15 @@ function loadData(cb) {
 }
 
 function onPageLoad() {
+    appendChart();
     async.parallel({
         data: loadData,
-        chartDims: initChart,
+        chartDims: remeasureChart,
     }, function (err, res) {
-        var buckets = d3.select('.result svg g.buckets');
+        var svg = d3.select('.result svg');
+        var buckets = svg.select('g.buckets');
         updateBuckets(buckets, res.chartDims, res.data);
+        remeasureLabel(svg, res.chartDims);
 
         d3.selectAll('.result svg .axis text')
             .classed("animate-in", true);
@@ -536,3 +439,4 @@ function onPageLoad() {
 }
 
 $(document).ready(onPageLoad);
+$(window).resize( );
