@@ -1,0 +1,33 @@
+/* TODO add dotted axis lines for print style */
+@page {
+    margin: 1cm;
+    size: landscape;
+}
+
+
+header nav, footer {
+    display: none;
+}
+
+body .result {
+    display:inline;
+    width:100%;
+    margin: 0;
+    padding: 0;
+    page-break-after: avoid;
+}
+
+.bucket-label {
+   display:none;
+}
+
+.axis line {
+  visibility:hidden;
+}
+
+.y.axis line {
+  visibility:visible;
+  fill:none;
+  stroke: #777;
+  stroke-dasharray: 4,10;
+}

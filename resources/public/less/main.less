@@ -1,5 +1,17 @@
 /* TODO add more color schemes for different climates */
 
+div.result {
+    height: 100%;
+    width: 100%;
+    overflow-x: hidden;
+    overflow-y: hidden;
+}
+
+body {
+    overflow-x: hidden;
+    overflow-y: hidden;
+}
+
 @odd-middle-stroke-color: #753D56;
 @odd-box-fill-color: #9FBA91;
 @odd-box-stroke-color: #F6F8B7;
@@ -11,11 +23,6 @@
 @box-stroke-color: #575040;
 @whisker-stroke-color: #373632;
 @whisker-end-stroke-color: #524346;
-
-body {
-    overflow-x: hidden;
-    overflow-y: hidden;
-}
 
 .middle {
     stroke: @middle-stroke-color;
@@ -62,46 +69,26 @@ body {
 
 .axis {
   font-family:"Trebuchet MS", Helvetica, sans-serif;
+  fill: black;
 }
 
-.axis text.odd {
+.axis text.odd.animate-in {
     fill: @odd-box-fill-color;
+    -webkit-transition: all 1s linear;
+    transition: all 1s linear;
 }
 
-.axis text.even {
+.axis text.even.animate-in {
     fill: @box-fill-color;
-}
-
-/* Bucket hover effects */
-/* TODO fade out label and fade month axis appropriately
-   when corresponding box-and-whisker is :hover'ed */
-.bucket .bucket-label
-{
-    opacity: 0;
-}
-
-.bucket:hover .bucket-label
-{
-    opacity: 1;
-}
-
-.bucket
-{
-    opacity: 1;   
-    -webkit-transition: all 0.25s ease-out;
-    transition: all 0.25s ease-out;
-}
-
-.buckets:hover > .bucket:not(:hover)
-{
-    opacity: 0.25;   
-    -webkit-transition: all 0.5s ease-out;
-    transition: all 0.5s ease-out;
+    -webkit-transition: all 1s linear;
+    transition: all 1s linear;
 }
 
 /* Styling for bucket and text */
-.bucket-label {
+.bucket-label
+{
   pointer-events: none;
+    opacity: 0;
 }
 
 text.bucket-label {
@@ -137,6 +124,27 @@ line.bucket-label.mean  {
     stroke: @odd-middle-stroke-color;
 }
 
+/* On Load Animation */
+.buckets {
+    opacity: 0;
+}
+
+.buckets.animate-in {
+    opacity: 1;
+    -webkit-transition: all 1s linear;
+    transition: all 1s linear;
+}
+
+.label {
+    opacity: 0;
+}
+
+.label.animate-in {
+    opacity: 1;
+    -webkit-transition: all 1s linear;
+    transition: all 1s linear;
+}
+
 /* Styling for axes and their text */
 .axis path {
   display: none;
@@ -147,20 +155,8 @@ line.bucket-label.mean  {
   stroke: #000;
 }
 
-.axis .minor line {
-  visibility: hidden;
-  stroke: #777;
-  stroke-dasharray: 2,2;
-}
-
-.axis .major line {
-  visibility: hidden;
-  stroke: #777;
-  stroke-dasharray: 2,5;
-}
-
 .axis .hidden line {
-  visibility: hidden;
+  display:none;
 }
 
 
@@ -185,3 +181,4 @@ line.bucket-label.mean  {
 .labelbot {
   font-size: 120%;
 }
+

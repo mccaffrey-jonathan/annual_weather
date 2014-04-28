@@ -1,0 +1,27 @@
+/* Bucket hover effects */
+/* TODO fade out label and fade month axis appropriately
+   when corresponding box-and-whisker is :hover'ed */
+
+.bucket
+{
+    opacity: 1;   
+    -webkit-transition: all 0.25s ease-out;
+    transition: all 0.25s ease-out;
+}
+
+.buckets:hover > .bucket:not(:hover)
+{
+    opacity: 0.25;   
+    -webkit-transition: all 0.5s ease-out;
+    transition: all 0.5s ease-out;
+}
+
+.axis line {
+  display:none;
+}
+
+.bucket:hover .bucket-label
+{
+    opacity: 1;
+}
+
