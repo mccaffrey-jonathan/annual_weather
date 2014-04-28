@@ -1,3 +1,19 @@
+function setOnPrinting(beforePrint, afterPrint) {
+    if (window.matchMedia) {
+        var mediaQueryList = window.matchMedia('print');
+        mediaQueryList.addListener(function(mql) {
+            if (mql.matches) {
+                beforePrint();
+            } else {
+                afterPrint();
+            }
+        });
+    }
+
+    window.onbeforeprint = beforePrint;
+    window.onafterprint = afterPrint;
+}
+
 var monthDictionary = {
     0: "Jan",
     1: "Feb",
@@ -35,6 +51,18 @@ function centerTextInColumnOfWidth(w) {
 
 function formatFahrenheit(d) {
   return d + "\u00B0F";
+}
+
+function formatEmpty(d) {
+    return "";
+}
+
+function formatFilter(fmt, d) {
+    if (d % 10 == 0) {
+        return fmt(d);
+    } else {
+        return "";
+    }
 }
 
 // TODO I really prefer just in front of decimal
@@ -89,7 +117,7 @@ function remeasureLabel(svg, chartDims) {
         .attr("transform", "translate(" +
                 (chartDims.windowWidth - 350).toString() +
                 ", " +
-                (chartDims.windowHeight - 225).toString() +
+                (chartDims.windowHeight - 250).toString() +
                 ")");
 
     label.select(".war-foreign-object")
@@ -275,20 +303,22 @@ function updateBuckets(buckets,  data) {
 }
 
 function remeasureChart(cb) {
-    var body = document.body,
-        html = document.documentElement;
 
     var windowHeight = $(window).height(),
         windowWidth = $(window).width(),
         numBuckets = 12,
         yAxisTextOffset = 45,
         margin = {top: 20, right: 40, bottom: 30, left: yAxisTextOffset},
+
        // width = 960 - margin.left - margin.right,
         width = windowWidth - margin.left - margin.right,
         // height = 500 - margin.top - margin.bottom,
         height = windowHeight - margin.top - margin.bottom,
         barSpace = Math.floor(width / numBuckets) - 1,
         barWidth = (3*barSpace)/4;
+
+    console.log(windowWidth);
+    console.log(windowHeight);
 
     var centerTextInColumn = centerTextInColumnOfWidth(barSpace);
 
@@ -309,28 +339,68 @@ function remeasureChart(cb) {
     var svg = outerSvg.select('g')
         .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
+    // Print axis
     // tickSize width drives the ticks across the entire chart
-    var yAxis = d3.svg.axis()
-        .scale(y)
-        .ticks(20)
-        .tickSize(width)
-        .tickFormat(formatFahrenheit)
-        .orient("right");
+    {
+        var yAxis = d3.svg.axis()
+            .scale(y)
+            .tickValues(_.range(-10, 120, 10))
+            .tickSize(width)
+            .tickFormat(formatEmpty)
+            .orient("right");
 
-    var gy = svg.select("g.y.axis")
-        .call(yAxis);
+        svg.select("g.y.axis.print").call(yAxis);
+    }
 
-    gy.selectAll("g")
-        .filter(function(d) { return d; })
-        .classed("minor", true);
+    // Classy thermometer y axis
+    {
+        var base = 2;
+        var growing = 6;
 
-    gy.selectAll("g")
-        .filter(function(d) { return d === 0; })
-        .classed("major", true);
+        var r = _.range(-20, 121, 1);
 
-    gy.selectAll("text")
-        .attr("x", -yAxisTextOffset)
-        .attr("dy", 4);
+        var littleAxis = d3.svg.axis()
+            .scale(y)
+            .tickValues(_.filter(r, function(t) {
+                return (t % 10) != 0 && (t % 2) == 0;
+            }))
+            .tickSize(base + growing)
+            .tickFormat(formatEmpty)
+            .orient("left");
+
+        var gLittle = svg.select("g.y.axis.little")
+            .call(littleAxis);
+
+
+        var middleAxis = d3.svg.axis()
+            .scale(y)
+            .tickValues(_.filter(r, function(t) {
+                return (t % 10) == 0 && (t % 20) != 0;
+            }))
+            .tickSize(base + 2*growing)
+            .tickFormat(formatEmpty)
+            .orient("left");
+
+        var gMiddle = svg.select("g.y.axis.medium")
+            .call(middleAxis);
+
+
+        var bigAxis = d3.svg.axis()
+            .scale(y)
+            .tickValues(_.filter(r, function(t) {
+                return (t % 20) == 0;
+            }))
+            .tickSize(base + 3*growing)
+            .orient("left");
+
+        var gBig = svg.select("g.y.axis.big")
+            .call(bigAxis);
+
+        gBig.selectAll("text")
+            .attr("x", -(base + 3*growing))
+            .attr("dy", -4)
+            .style("text-anchor", "end");
+    }
 
     var xAxis = d3.svg.axis()
         .scale(x)
@@ -351,7 +421,7 @@ function remeasureChart(cb) {
     gx.selectAll("text")
         .call(centerTextInColumn);
 
-    gx.selectAll("g").filter(function(d) { return d; })
+    gx.selectAll("line").filter(function(d) { return d; })
         .classed("hidden", true);
 
     cb(null, {
@@ -366,8 +436,11 @@ function remeasureChart(cb) {
 
 function appendChart() {
     var svg = d3.select(".result").append("svg").append("g");
-    var gy = svg.append("g").attr("class", "y axis");
     var gx = svg.append("g").attr("class", "x axis");
+    var gy = svg.append("g").attr("class", "y axis little");
+    var gy = svg.append("g").attr("class", "y axis medium");
+    var gy = svg.append("g").attr("class", "y axis big");
+    var gy = svg.append("g").attr("class", "y axis print");
 
     appendLabel(svg);
 
@@ -429,5 +502,14 @@ function onPageResize() {
     });
 }
 
+function loggingWrapper(func, log) {
+    return function() {
+        log();
+        func();
+    }
+}
+
 $(document).ready(onPageLoad);
 $(window).resize(onPageResize);
+
+setOnPrinting(onPageResize, onPageResize);

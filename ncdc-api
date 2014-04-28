@@ -90,6 +90,10 @@ of NCDC API format and your use.
 ! TODO make label size relative to screen-size ?
 ! TODO Highlight months on axis with bars
 
+Light, pastelly colors for the vertical graph ticks seems to work well
+I think the months on the bottom should match the body colors ?
+Make sure the middle line can show up in printing !
+
 What do we need to do to serve real datas ?
 If we are seeing modest load, collect statistics about lookups and density for each of these layers.
     Layers for caching:
@@ -105,5 +109,4 @@ If we are seeing modest load, collect statistics about lookups and density for e
     station+query->weather cache
         Yearly expiration date ?
 
-
-
+Click on axis for celsius?  Option in URL

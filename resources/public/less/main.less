@@ -24,6 +24,10 @@ body {
 @whisker-stroke-color: #373632;
 @whisker-end-stroke-color: #524346;
 
+.hidden {
+    visibility: hidden;
+}
+
 .middle {
     stroke: @middle-stroke-color;
     stroke-width: 3;
@@ -67,9 +71,13 @@ body {
     stroke: @odd-whisker-end-stroke-color;
 }
 
-.axis {
-  font-family:"Trebuchet MS", Helvetica, sans-serif;
-  fill: black;
+.axis text{
+    font-family:"Trebuchet MS", Helvetica, sans-serif;
+    fill: black;
+}
+
+.y.axis text {
+    /*font-family:Impact, Charcoal, sans-serif;*/
 }
 
 .axis text.odd.animate-in {
@@ -82,6 +90,10 @@ body {
     fill: @box-fill-color;
     -webkit-transition: all 1s linear;
     transition: all 1s linear;
+}
+
+.axis.print {
+    visibility: visible;
 }
 
 /* Styling for bucket and text */
@@ -97,7 +109,8 @@ text.bucket-label {
 
 line.bucket-label  {
     stroke-width: 1;
-    stroke-dasharray: 3,5;
+    stroke-dasharray: 8,10;
+    stroke-dashoffset: 10;
 }
 
 line.bucket-label.extreme-max,line.bucket-label.extreme-min {
@@ -155,11 +168,6 @@ line.bucket-label.mean  {
   stroke: #000;
 }
 
-.axis .hidden line {
-  display:none;
-}
-
-
 /* Styling and sizing for label in corner */
 @font-face {
     font-family: MissionScript;
@@ -171,14 +179,14 @@ line.bucket-label.mean  {
 }
 
 .labeltop {
-  font-size: 185%;
+  font-size: 210%;
 }
 
 .labelmid {
-  font-size: 150%;
+  font-size: 180%;
 }
 
 .labelbot {
-  font-size: 120%;
+  font-size: 150%;
 }
 
