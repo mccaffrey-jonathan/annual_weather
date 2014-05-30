@@ -5,21 +5,27 @@
     com.javadocmd.simplelatlng.util.LengthUnit
     com.javadocmd.simplelatlng.window.RectangularWindow)
   (:require [clojure [pprint :as pp]]
-            [org.httpkit.client :as http])
-  (:use [annual-weather utils data]
+            [org.httpkit.client :as http]
+            [schema [core :as s]
+                    [macros :as sm]]
+            [throttler.core :refer [throttle-fn]])
+  (:use [annual-weather cdo utils]
         [clj-utils.core]))
 
 (def-> unpack-geocode
   deref)
 
-(defn query-geocode-uncached [q]
-  (http/get
-    "http://maps.googleapis.com/maps/api/geocode/json"
-    {:query-params
-     {:address q
-      :sensor false }}))
+(defn query-geocode-uncached-unthrottled [q]
+  (let [res (unpack-http-kit-json-res
+              (http/get
+                "http://maps.googleapis.com/maps/api/geocode/json"
+                {:query-params
+                 {:address q
+                  :sensor false }}))]
+    (if res (get-in res [:results 0]))))
 
-(def query-geocode query-geocode-uncached)
+(def query-geocode-uncached 
+  (throttle-fn query-geocode-uncached-unthrottled 750 :day 250))
 
 ; TODO does this work outside of NW demi-sphere?
 (defn window-to-gmaps-url
@@ -72,6 +78,23 @@
         padded-window
         (bounds-to-window geocode-bounds-map)))))
 
+(def Geocode-LatLng {s/Keyword s/Num})
+(def Geocode-Rect {:northeast Geocode-LatLng
+                   :southwest Geocode-LatLng})
+
+(def Geocoded
+  {:address_components
+    [{:long_name s/Str
+      :short_name s/Str
+      :types [s/Str]}]
+   :formatted_address s/Str
+   :geometry
+   {:bounds Geocode-Rect
+    :location Geocode-LatLng
+    :location_type s/Str
+    :viewport Geocode-Rect
+    :types [s/Str]}})
+
 (def skaneateles-example-data
   {:results
    [{:address_components
@@ -118,17 +141,6 @@
               LengthUnit/KILOMETER))]
     (first (sort-by distance-to-location stations))))
 
-(defn find-nearest-station
-  [query addr]
-  (let [geocoded (-> addr
-                     query-geocode
-                     unpack-http-kit-json-res)
-        geocode-loc (get-in geocoded [:results 0])
-        stations (->> geocode-loc
-                      fuzzy-bound-geocode-loc
-                      window-to-gmaps-url
-                      (query-stations query))]
-        (find-closest-to-geocode geocode-loc stations)))
 
 ; (-> "Skaneateles NY"
 ;     query-geocode

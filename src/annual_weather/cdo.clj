@@ -11,7 +11,8 @@
             [org.httpkit.client :as http]
             [schema
              [core :as sc]
-             [macros :as sm] ])
+             [macros :as sm] ]
+            [throttler.core :refer [ throttle-fn ]])
   (:use [annual-weather utils]
         [clj-utils.core]
         [uncomplicate.fluokitten core jvm]))
@@ -25,13 +26,16 @@
   unpack-http-kit-json-res
   pp/pprint)
 
-(defn query
+(defn query-unthrottled
   [endpoint q]
   (let [url (str "http://www.ncdc.noaa.gov/cdo-web/api/v2/"
                  (name endpoint))
         opts (assoc auth-opts :query-params q)
         prom (http/get url opts)]
     prom))
+
+; NCDC allows 1000 per day.  Give it some breathing room
+(def query (throttle-fn query-unthrottled 750 :day 250))
 
 ; TODO async version
 (defn query-full-depaginated-results
