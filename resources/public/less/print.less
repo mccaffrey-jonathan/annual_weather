@@ -1,6 +1,10 @@
 @page {
-    margin: 1cm;
+    margin-left: 1cm;
+    margin-right: 1cm;
+    margin-top: 1cm;
+    margin-bottom: 0.5cm;
     /* landscape is not wide enough */
+    /* directly setting svg dims in px works though */
     size: letter landscape;
 }
 
@@ -13,6 +17,7 @@ body .result {
     display:inline;
     width:100%;
     height:100%;
+    min-width:25cm;
     margin: 0% 0% 0% 0%;
     padding: 0;
     page-break-after: avoid;
@@ -29,7 +34,7 @@ body .result {
 .y.axis.print line {
   visibility: visible;
   fill: none;
-  /* stroke: #777; */
-  stroke: #000;
+  stroke: #777;
   stroke-dasharray: 8,10;
+  stroke-dashoffset: 10;
 }

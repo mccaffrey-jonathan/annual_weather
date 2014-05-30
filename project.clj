@@ -12,26 +12,33 @@
                  [org.clojure/data.json "0.2.4"] 
                  [prismatic/schema "0.2.0"]
                  [uncomplicate/fluokitten "0.3.0"]
+                 [clj-time "0.6.0"]
+                 [throttler "1.0.0"]
                  ; TODO better ns name, and export external deps
                  ; [clj-utils "LATEST"]
+                 ;
 
                  ; Domain-Specific
                  [com.javadocmd/simplelatlng "1.3.0"]
 
-                 ; Ring-Compojure Deps
+                 ; Ring-Compojure
                  [compojure "1.1.1"]
                  [hiccup "1.0.0"]
                  [ring.middleware.logger "0.4.0"]
                  [ring/ring-json "0.2.0"]
 
+                 ; DB
+                 [com.novemberain/monger "1.7.0"]
+
                  ; Logging deps
-                 [org.clojure/tools.logging "0.2.4"]
+                 [org.clojure/tools.logging "0.2.6"]
                  [org.slf4j/slf4j-log4j12 "1.7.1"]
                  [log4j/log4j "1.2.17"
                   :exclusions [javax.mail/mail
                                javax.jms/jms
                                com.sun.jmdk/jmxtools
                                com.sun.jmx/jmxri]]
+
                  ]
 
   :ring {:handler annual-weather.routes/app}

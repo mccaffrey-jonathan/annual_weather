@@ -299,13 +299,13 @@ function updateBuckets(buckets,  data) {
 
     buckets.classed("animate-in", false);
     buckets.classed("animate-in", true);
-    
 }
 
 function remeasureChart(cb) {
 
     var windowHeight = $(window).height(),
-        windowWidth = $(window).width(),
+        windowWidth = screen.width,
+            //$(window).width(),
         numBuckets = 12,
         yAxisTextOffset = 45,
         margin = {top: 20, right: 40, bottom: 30, left: yAxisTextOffset},
@@ -332,9 +332,9 @@ function remeasureChart(cb) {
         .range([height, 0]);
 
     // An SVG element with a bottom-right origin.
-    var outerSvg = d3.select(".result svg")
-        .attr("width", width + margin.left + margin.right)
-        .attr("height", height + margin.top + margin.bottom);
+    var outerSvg = d3.select(".result svg");
+        // .attr("width", width + margin.left + margin.right)
+        // .attr("height", height + margin.top + margin.bottom);
 
     var svg = outerSvg.select('g')
         .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
@@ -435,7 +435,8 @@ function remeasureChart(cb) {
 }
 
 function appendChart() {
-    var svg = d3.select(".result").append("svg").append("g");
+    var svg = d3.select(".result svg")
+        .append("g");
     var gx = svg.append("g").attr("class", "x axis");
     var gy = svg.append("g").attr("class", "y axis little");
     var gy = svg.append("g").attr("class", "y axis medium");
@@ -447,11 +448,20 @@ function appendChart() {
     svg.append("g").classed("buckets", true)
 }
 
+function showLoading() {
+    d3.selectAll('.loading').classed({'hidden': false});
+}
+
+function hideLoading() {
+    d3.selectAll('.loading').classed({'hidden': true});
+}
+
 function loadData(cb) {
     $.ajax({
         url: "search",
         type: "get",
-        data: {q: "Ithaca, CA"},
+        // data: {q: "New York, NY"},
+        data: {q: "San Francisco, CA"},
         success: function (data) {
 
             // Convert strings to numbers.
@@ -473,12 +483,14 @@ function loadData(cb) {
 
 function onPageLoad() {
     appendChart();
+    showLoading();
     async.parallel({
         data: loadData,
         chartDims: remeasureChart,
     }, function (err, res) {
         var svg = d3.select('.result svg');
         var buckets = svg.select('g.buckets');
+        hideLoading();
         updateBuckets(buckets, res.data);
         remeasureBuckets(buckets, res.chartDims);
         remeasureLabel(svg, res.chartDims);

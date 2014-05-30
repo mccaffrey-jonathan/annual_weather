@@ -94,6 +94,8 @@ Light, pastelly colors for the vertical graph ticks seems to work well
 I think the months on the bottom should match the body colors ?
 Make sure the middle line can show up in printing !
 
+Try month labels abutting bars on the graph ?
+
 What do we need to do to serve real datas ?
 If we are seeing modest load, collect statistics about lookups and density for each of these layers.
     Layers for caching:
@@ -109,4 +111,10 @@ If we are seeing modest load, collect statistics about lookups and density for e
     station+query->weather cache
         Yearly expiration date ?
 
+geocoding -> Addres
+
 Click on axis for celsius?  Option in URL
+
+BUG Hovering your mouse over the page during loading blocks visibilitu of the graph !  Weird !
+
+TODO fancy opening of graphics from median line
