@@ -6,6 +6,6 @@
 
 (def-> unpack-http-kit-json-res
   deref
-  ((fn [x] (pp/pprint x) x))
+  ; ((fn [x] (pp/pprint x) x))
   :body
   (json/read-str :key-fn keyword))

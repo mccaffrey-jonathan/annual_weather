@@ -30,7 +30,7 @@
   (handler/site page-routes))
 
 (def reload-on-request
-  '(annual-weather data data-web routes views))
+  '(annual-weather app cdo data-web geocode routes utils views web-cache ))
 
 (def app
   (-> main-routes

@@ -8,7 +8,9 @@
     [clojure.data [json :as json]]
     [clojure.core.rrb-vector :as fv]
     [clojure [pprint :as pp]]
-    [monger core
+    [monger
+     command
+     core
      collection
      joda-time
      [operators :as op]]
@@ -45,7 +47,14 @@
                                   {:expireAfterSeconds 
                                    (.toSeconds TimeUnit/DAYS 365)}))
 
-(def log-caching true)
+(def max-db-file-size (* 256 1000 1000))
+
+(defn insert-if-room [coll doc]
+  (if (< ((monger.command/db-stats) "fileSize") 
+         max-db-file-size)
+    (monger.collection/insert coll doc)))
+
+(def log-caching false)
 
 (def write-db true)
 (def read-db true)
@@ -66,7 +75,7 @@
   (letfn [(maybe-write-db [q geocoded] 
             (if log-caching (info "if" write-db "write geocode data"))
             (if write-db 
-              (monger.collection/insert "geocodeWebCache"
+              (insert-if-room "geocodeWebCache"
                             {:user-addr q
                              :geocoded geocoded 
                              :created-at (DateTime. )})))
@@ -101,7 +110,7 @@
   (let [maybe-write-db (fn [q-date q-rest data]
          (if log-caching (info "if" write-db "write d3 data"))
          (if write-db 
-          (monger.collection/insert "d3StyleDataWebCache"
+          (insert-if-room "d3StyleDataWebCache"
              {:query-date q-date
               :query-rest q-rest
               :data data
@@ -129,14 +138,14 @@
          (if log-caching (info "if " write-db " write stations"))
          (if write-db 
            (doseq [station stations]
-            (monger.collection/insert "stationWebCache"
+            (insert-if-room "stationWebCache"
                 {:longitudeLatitude
                  [(station :longitude) (station :latitude)]
                  :query-rest q-rest
                  :station station
                  :created-at (DateTime. ) }))))
         maybe-read-db (fn [q-rest extent]
-          (if log-caching (info "if " read-db "try read stations"))
+          (if log-caching (info "if" read-db "try read stations"))
           (and read-db
                (some->>
                  (monger.collection/find-maps "stationWebCache"

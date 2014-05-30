@@ -12,7 +12,7 @@
              [core :as s]
              [macros :as sm] ]
             )
-  (:use [annual-weather data geocode utils]
+  (:use [annual-weather cdo geocode utils web-cache]
         [clj-utils.core]
         [uncomplicate.fluokitten core jvm]))
 
@@ -40,69 +40,33 @@
 
 (def query-l (assoc query-n :stationid "GHCND:AJ000037985"))
 
-(def Bucketed {s/Any {s/Str [s/Int] } })
-
-(def D3-Schema [{:key s/Int
-                 :value {s/Str [s/Int] } }])
-
-; TODO is there a builtin for this?
-; Also not quite right.
-(defn vec-spread [& fns]
-  (fn [x]
-    (vec (map apply fns (repeat x)))))
-
-
-(let [df (SimpleDateFormat. "yyyy-MM-dd")]
-  (defn parse-ncdc-date [s]
-    (.parse df s)))
-
-; TODO for now group by month of year
-(defn bucket-date-str [s]
-  (.get (doto (Calendar/getInstance)
-          (.setTime (parse-ncdc-date s)))
-        Calendar/MONTH))
-
-; TODO do we need to merge now?
-(defn ncdc-data-seq-to-map [xs]
-  (apply merge-with concat
-        (for [x xs] {(x :datatype) [(x :value)]})))
-
-; TODO what is the input schema ?
-(sm/defn group-results :- Bucketed
-  [res] 
-  (->> res
-       (group-by (comp bucket-date-str :date))
-       (fmap ncdc-data-seq-to-map)))
-
-(sm/defn groups-to-d3-style :- D3-Schema
-  [gs :- Bucketed]
-  (vec (for [[k v] gs] {:key k :value v})))
+(defn find-nearest-station
+  [q addr]
+  (let [geocoded-addr (query-geocode addr)
+        stations (->> geocoded-addr
+                      fuzzy-bound-geocode-loc
+                      (query-stations q))]
+        (find-closest-to-geocode geocoded-addr stations)))
 
 (def->> data-for-human-location
   (find-nearest-station query-n) ; find a station
   :id 
   (assoc query-n :stationid)
-  (query-cdo :data) ; Ask for weather data
-  unpack-http-kit-json-res ; parse the response
-  :results)
+  query-data-d3-style)
 
-(def mock-data true)
+(def mock-data false)
 
 (defn api-handler []
   (if mock-data
     (read-string (slurp "la-data-d3"))
-    (-> "San Jose, CA"
-        data-for-human-location
-        group-results
-        groups-to-d3-style)))
+    (data-for-human-location "San Jose, CA")))
 
 ; TODO handle errors more pleasantly
 ; Catch exceptions and serve up a nice response
 (defn search-handler [s]
   (if mock-data
     (read-string (slurp "la-data-d3"))
-    (-> s
-        ((fn [s] (println s) s) )
-        data-for-human-location
-        group-results
-        groups-to-d3-style)))
+    (do
+       (println "search for query '" s "'")
+       (data-for-human-location s))))
+
