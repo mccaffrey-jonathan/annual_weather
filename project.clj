@@ -27,6 +27,7 @@
                  [compojure "1.1.1"]
                  [hiccup "1.0.0"]
                  [ring.middleware.logger "0.4.0"]
+                 [ring/ring-jetty-adapter "1.1.6"]
                  [ring/ring-json "0.2.0"]
 
                  ; DB
