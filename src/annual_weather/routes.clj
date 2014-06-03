@@ -3,6 +3,7 @@
         annual-weather.views
         [hiccup.middleware :only (wrap-base-url)])
   (:require [annual-weather.data-web :as data-web]
+            [ring.adapter.jetty :as jetty]
             [ring.middleware.json :as json]
             [ring.middleware.logger :as logger]
             [ring.middleware.reload :as reload]
@@ -38,3 +39,6 @@
       (reload/wrap-reload reload-on-request)
       (keyword-params/wrap-keyword-params)
       (wrap-base-url)))
+
+(defn -main [port]
+  (jetty/run-jetty app {:port (Integer. port) :join? false}))
