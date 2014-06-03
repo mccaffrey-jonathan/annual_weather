@@ -4,6 +4,7 @@
   :url "http://example.com/FIXME"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
+  :min-lein-version "2.0.0"
   :dependencies [
                  ; Generic deps
                  [org.clojure/core.rrb-vector "0.0.10"]
