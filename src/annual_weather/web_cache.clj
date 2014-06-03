@@ -8,10 +8,12 @@
     [clojure.data [json :as json]]
     [clojure.core.rrb-vector :as fv]
     [clojure [pprint :as pp]]
+    environ.core
     [monger
-     command
-     core
      collection
+     command
+     conversion
+     core
      joda-time
      [operators :as op]]
     [org.httpkit.client :as http]
@@ -21,45 +23,56 @@
         [clojure.tools.logging]
         [clj-utils.core]))
 
-(defn db-init []
-  (monger.core/connect!)
-  (monger.core/use-db! "annual-weather")
+(defn connect []
+  (if-let [mongo-uri (environ.core/env :mongohq-url)]
+    (monger.core/connect-via-uri mongo-uri)
+    ; Else, default connection
+    (let [conn (monger.core/connect)]
+      {:conn conn :db (monger.core/get-db conn, "annual-weather")})))
 
-  (monger.collection/ensure-index "geocodeWebCache"
-                                  (array-map :user-addr 1))
-  (monger.collection/ensure-index "geocodeWebCache"
-                                  (array-map :created-at 1)
-                                  {:expireAfterSeconds
-                                   (.toSeconds TimeUnit/DAYS 365)})
-
-  (monger.collection/ensure-index "stationWebCache"
-                                  (array-map :longitudeLatitude "2dsphere" 
-                                             :query-rest 1))
-  (monger.collection/ensure-index "stationWebCache"
-                                  (array-map :created-at 1)
-                                  {:expireAfterSeconds 
-                                   (.toSeconds TimeUnit/DAYS 365)})
-
-  (monger.collection/ensure-index "d3StyleDataWebCache"
-                                  (array-map :query-rest 1))
-  (monger.collection/ensure-index "d3StyleDataWebCache"
+(def connected-db (atom nil))
+(defn init-db []
+  (let [{:keys [conn db]} (connect)]
+    (reset! connected-db db)
+    (monger.collection/ensure-index @connected-db "geocodeWebCache"
+                                    (array-map :user-addr 1))
+    (monger.collection/ensure-index @connected-db "geocodeWebCache"
                                     (array-map :created-at 1)
-                                  {:expireAfterSeconds 
-                                   (.toSeconds TimeUnit/DAYS 365)}))
+                                    {:expireAfterSeconds
+                                     (.toSeconds TimeUnit/DAYS 365)})
+
+    (monger.collection/ensure-index @connected-db "stationWebCache"
+                                    (array-map :longitudeLatitude "2dsphere" 
+                                               :query-rest 1))
+    (monger.collection/ensure-index @connected-db "stationWebCache"
+                                    (array-map :created-at 1)
+                                    {:expireAfterSeconds 
+                                     (.toSeconds TimeUnit/DAYS 365)})
+
+    (monger.collection/ensure-index @connected-db "d3StyleDataWebCache"
+                                    (array-map :query-rest 1))
+    (monger.collection/ensure-index @connected-db "d3StyleDataWebCache"
+                                    (array-map :created-at 1)
+                                    {:expireAfterSeconds 
+                                     (.toSeconds TimeUnit/DAYS 365)})))
 
 (def max-db-file-size (* 256 1000 1000))
 
 (defn insert-if-room [coll doc]
-  (if (< ((monger.command/db-stats) "fileSize") 
-         max-db-file-size)
-    (monger.collection/insert coll doc)))
+ (if (< (
+         (monger.conversion/from-db-object
+           (monger.command/db-stats @connected-db)
+           true)
+         :fileSize) 
+        max-db-file-size)
+    (monger.collection/insert @connected-db coll doc)))
 
 (def log-caching false)
 
 (def write-db true)
 (def read-db true)
 (def read-uc true)
-(if (or read-db write-db) (db-init))
+(if (or read-db write-db) (init-db))
 
 (defn success-log
   [tag x]
@@ -67,10 +80,6 @@
   x)
 
 (sm/defn query-geocode :- geocode/Geocoded
-  "TODO is there a structure of cached reads, cache writes, and query
-  That we can use to pull out the specifics from the control flow ?
-  TODO log or store cache statistics !
-  But this works !"
   [q :- s/Str] 
   (letfn [(maybe-write-db [q geocoded] 
             (if log-caching (info "if" write-db "write geocode data"))
@@ -84,7 +93,7 @@
             (if read-db
               (some->> q
                        (array-map :user-addr)
-                       (monger.collection/find-one-as-map "geocodeWebCache")
+                       (monger.collection/find-one-as-map @connected-db "geocodeWebCache")
                        :geocoded
                        (success-log "geocoded"))))]
 
@@ -120,7 +129,7 @@
           (and read-db
                    (some->> q-rest
                             (array-map :query-rest)
-                            (monger.collection/find-one-as-map "d3StyleDataWebCache")
+                            (monger.collection/find-one-as-map @connected-db "d3StyleDataWebCache")
                             :data
                             (success-log "data"))))
         [q-date q-rest] (group-map-by-keys q [:startdate :enddate])]
@@ -148,7 +157,7 @@
           (if log-caching (info "if" read-db "try read stations"))
           (and read-db
                (some->>
-                 (monger.collection/find-maps "stationWebCache"
+                 (monger.collection/find-maps @connected-db "stationWebCache"
                   {:longitudeLatitude
                  {op/$geoWithin
                   {"$box"

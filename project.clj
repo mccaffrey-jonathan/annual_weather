@@ -14,6 +14,7 @@
                  [uncomplicate/fluokitten "0.3.0"]
                  [clj-time "0.6.0"]
                  [throttler "1.0.0"]
+                 [environ "0.5.0"]
                  ; TODO better ns name, and export external deps
                  ; [clj-utils "LATEST"]
                  ;
@@ -28,7 +29,7 @@
                  [ring/ring-json "0.2.0"]
 
                  ; DB
-                 [com.novemberain/monger "1.7.0"]
+                 [com.novemberain/monger "2.0.0-rc1"]
 
                  ; Logging deps
                  [org.clojure/tools.logging "0.2.6"]

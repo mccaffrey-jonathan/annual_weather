@@ -8,6 +8,7 @@
             [clojure
              [pprint :as pp]
              [string :as s]]
+            environ.core
             [org.httpkit.client :as http]
             [schema
              [core :as sc]
@@ -17,7 +18,7 @@
         [clj-utils.core]
         [uncomplicate.fluokitten core jvm]))
 
-(def token (s/trim (slurp "ncdc-token")))
+(def token (environ.core/env :ncdc-token))
 (def auth-opts {:headers {"token" token}})
 
 ; (def url "http://www.ncdc.noaa.gov/cdo-web/api/v2/locations?datasetid=GHCNDMS")

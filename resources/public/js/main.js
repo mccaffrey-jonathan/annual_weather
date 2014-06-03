@@ -461,7 +461,7 @@ function loadData(cb) {
         url: "search",
         type: "get",
         // data: {q: "New York, NY"},
-        data: {q: "San Francisco, CA"},
+        data: {q: "Redding, CA"},
         success: function (data) {
 
             // Convert strings to numbers.
