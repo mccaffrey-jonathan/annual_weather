@@ -132,14 +132,18 @@
     fuzzy-bound-geocode-loc
     window-to-gmaps-url)
 
-(defn find-closest-to-geocode 
+(defn find-good-near-geocode
   [{{{loc-lat :lat loc-lng :lng} :location} :geometry} stations]
   (letfn [(distance-to-location [{stat-lat :latitude stat-lng :longitude}]
             (LatLngTool/distance
               (LatLng. stat-lat stat-lng)
               (LatLng. loc-lat loc-lng)
               LengthUnit/KILOMETER))]
-    (first (sort-by distance-to-location stations))))
+    ; Sort by datacoverage rather than distance
+    ; TODO jmccaffrey: combine the 2 metrics
+    (first (sort-by :datacoverage stations))
+    ;(first (sort-by distance-to-location stations))
+    ))
 
 
 ; (-> "Skaneateles NY"

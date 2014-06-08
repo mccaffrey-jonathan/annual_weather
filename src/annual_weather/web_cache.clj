@@ -23,12 +23,18 @@
         [clojure.tools.logging]
         [clj-utils.core]))
 
+; TODO add some hint of keys to cache logging
+(def log-caching true)
+
 (defn connect []
   (if-let [mongo-uri (environ.core/env :mongohq-url)]
     (monger.core/connect-via-uri mongo-uri)
     ; Else, default connection
     (let [conn (monger.core/connect)]
-      {:conn conn :db (monger.core/get-db conn, "annual-weather")})))
+      (if log-caching (info "Connected to mongo server" conn))
+      (let [db (monger.core/get-db conn, "annual-weather")]
+        (if log-caching (info "Connected to db" db))
+        {:conn conn :db db}))))
 
 (def connected-db (atom nil))
 (defn init-db []
@@ -57,17 +63,29 @@
                                      (.toSeconds TimeUnit/DAYS 365)})))
 
 (def max-db-file-size (* 256 1000 1000))
+(def collections ["geocodeWebCache" "stationWebCache" "d3StyleDataWebCache"])
 
 (defn insert-if-room [coll doc]
- (if (< (
-         (monger.conversion/from-db-object
+ (if (< ((monger.conversion/from-db-object
            (monger.command/db-stats @connected-db)
            true)
          :fileSize) 
         max-db-file-size)
     (monger.collection/insert @connected-db coll doc)))
 
-(def log-caching false)
+(defn cachings-stats []
+  {:fileSize ((monger.conversion/from-db-object
+                (monger.command/db-stats @connected-db)
+                true)
+              :fileSize) 
+   :counts (into {}
+                 (for [coll collections]
+                   [coll
+                    (monger.collection/count @connected-db coll)]))})
+
+(defn drop-cache []
+  (doseq [coll collections]
+    (monger.collection/drop @connected-db coll)))
 
 (def write-db true)
 (def read-db true)
@@ -82,7 +100,7 @@
 (sm/defn query-geocode :- geocode/Geocoded
   [q :- s/Str] 
   (letfn [(maybe-write-db [q geocoded] 
-            (if log-caching (info "if" write-db "write geocode data"))
+            (if log-caching (info "if" write-db "write geocode data for" q))
             (if write-db 
               (insert-if-room "geocodeWebCache"
                             {:user-addr q
@@ -101,7 +119,7 @@
     (if read-uc
       (if-let [geocoded (geocode/query-geocode-uncached q)]
         (do
-          (info "read uc geocoding")
+          (if log-caching (info "read uc geocoding"))
           (maybe-write-db q geocoded)
           geocoded))))))
 
@@ -142,9 +160,9 @@
               data))))))
 
 ; TODO write and read query to DB, and add secondary index
-(defn query-stations [q extent]
+(defn query-stations [q human-loc extent]
   (let [maybe-write-db (fn [q-rest stations]
-         (if log-caching (info "if " write-db " write stations"))
+         (if log-caching (info "if " write-db " write" (count stations) "stations near" human-loc))
          (if write-db 
            (doseq [station stations]
             (insert-if-room "stationWebCache"

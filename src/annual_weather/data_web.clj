@@ -2,7 +2,10 @@
   (:import 
     java.util.Calendar
     java.text.SimpleDateFormat)
-  (:require [clojure.java [io :as io]]
+  (:require [clj-time 
+             [core :as t]
+             [format :as f] ]
+            [clojure.java [io :as io]]
             [clojure.data [json :as json]]
             [clojure
              [pprint :as pp]
@@ -14,11 +17,8 @@
             )
   (:use [annual-weather cdo geocode utils web-cache]
         [clj-utils.core]
+        [clojure.tools.logging]
         [uncomplicate.fluokitten core jvm]))
-
-(def query-dates
-  {:startdate "1995-01-01"
-  :enddate   "2005-01-01" })
 
 (def query-d
   {:datatypeid ["EMNT" "EMXT" "MMNT" "MMXT" "MNTM"]
@@ -34,25 +34,43 @@
   conrtaining one datapoint.  The datapoints move through all
   cateugories for a date, then advance"
   (merge
-    query-dates
     query-d
     (query-first-n-results (* 5 12 10))))
 
-(def query-l (assoc query-n :stationid "GHCND:AJ000037985"))
+(defn recent-enough-dates []
+  "We'll accept data back to 1990, seems pretty recent to me ?
+  TODO, include dates of data used in response"
+  {:startdate "1990-01-01"
+   :enddate  (f/unparse (f/formatters :date) (t/now))})
 
-(defn find-nearest-station
+(defn recent-dates-for-station [st]
+  (let [fmt (f/formatters :date) ]
+     {:startdate (f/unparse fmt
+                            (t/minus (f/parse fmt (st :maxdate))
+                                     (t/years 10)))
+      :enddate  (st :maxdate)}))
+
+(def should-log true)
+
+(defn find-good-station-near
   [q addr]
   (let [geocoded-addr (query-geocode addr)
         stations (->> geocoded-addr
                       fuzzy-bound-geocode-loc
-                      (query-stations q))]
-        (find-closest-to-geocode geocoded-addr stations)))
+                      (query-stations q addr))]
+        (find-good-near-geocode geocoded-addr stations)))
 
-(def->> data-for-human-location
-  (find-nearest-station query-n) ; find a station
-  :id 
-  (assoc query-n :stationid)
-  query-data-d3-style)
+(defn data-for-human-location [human-loc]
+  (let [st (find-good-station-near
+             (merge (recent-enough-dates) query-n) human-loc)] 
+    (if should-log (info "Chose station" (st :name)
+                         "with coverage" (st :datacoverage)
+                         "located at lat: " (st :latitude) ", lng:" (st :longitude)))
+    (query-data-d3-style
+      (merge
+        (assoc query-n 
+               :stationid (st :id))
+        (recent-dates-for-station st)))))
 
 (def mock-data false)
 
