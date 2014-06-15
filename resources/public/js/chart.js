@@ -456,29 +456,131 @@ function hideLoading() {
     d3.selectAll('.loading').classed({'hidden': true});
 }
 
+function showError() {
+    d3.selectAll('.error').classed({'hidden': false});
+}
+
+// TODO GitHub this snippet ?
+// Reformat a GeocoderResult into a JSON Object like the server-side
+// geocoding library returns
+function GeocoderResultToJSONObject (res) {
+    return {
+        address_components: res.address_components,
+        formatted_address: res.formatted_address,
+        types: res.types,
+        geometry: {
+            location_type: res.geometry.location_type,
+            bounds: {
+                northeast: {
+                    lat: res.geometry.bounds.getNorthEast().lat(),
+                    lng: res.geometry.bounds.getNorthEast().lng()
+                },
+                southwest: {
+                    lat: res.geometry.bounds.getSouthWest().lat(),
+                    lng: res.geometry.bounds.getSouthWest().lng()
+                }
+            },
+            location: {
+                lat: res.geometry.location.lat(),
+                lng: res.geometry.location.lng()
+            },
+            viewport: {
+                northeast: {
+                    lat: res.geometry.viewport.getNorthEast().lat(),
+                    lng: res.geometry.viewport.getNorthEast().lng()
+                },
+                southwest: {
+                    lat: res.geometry.viewport.getSouthWest().lat(),
+                    lng: res.geometry.viewport.getSouthWest().lng()
+                }
+            }
+        }
+    }
+}
+
+function getQueryStrings() { 
+    var assoc  = {};
+    var decode = function (s) { return decodeURIComponent(s.replace(/\+/g, " ")); };
+    var queryString = location.search.substring(1); 
+    var keyValues = queryString.split('&'); 
+
+    for(var i in keyValues) { 
+        var key = keyValues[i].split('=');
+        if (key.length > 1) {
+            assoc[decode(key[0])] = decode(key[1]);
+        }
+    } 
+
+    return assoc; 
+} 
+
 function loadData(cb) {
-    $.ajax({
-        url: "search",
-        type: "get",
-        // data: {q: "New York, NY"},
-        data: {q: "Redding, CA"},
-        success: function (data) {
 
-            // Convert strings to numbers.
-            data.forEach(function(d) {
-                d.key = +d.key;
-                d.value.MNTM = ncdcToFahrenheit(d3.mean(d.value.MNTM));
-                d.value.MMXT = ncdcToFahrenheit(d3.mean(d.value.MMXT));
-                d.value.MMNT = ncdcToFahrenheit(d3.mean(d.value.MMNT));
-                d.value.EMXT = ncdcToFahrenheit(d3.mean(d.value.EMXT));
-                d.value.EMNT = ncdcToFahrenheit(d3.mean(d.value.EMNT));
+    qs = getQueryStrings();
+
+    var geocoder = new google.maps.Geocoder();
+    var humanLocation = decodeURIComponent(qs['address']);
+    console.log(humanLocation);
+    geocoder.geocode({ 'address': humanLocation },
+        function(results, status) {
+            if (status != google.maps.GeocoderStatus.OK) {
+                // TODO report error
+                return;
+            }
+
+            // POST due to large JSON body
+            $.ajax({
+                type: 'post',
+                contentType: 'application/json',
+                url: '/api/data',
+                data: JSON.stringify({
+                    humanLocation: qs['address'],
+                    geocoded: GeocoderResultToJSONObject(results[0])}),
+                success: function(body) {
+
+                    // Convert strings to numbers.
+                    // TODO Delete me if the short version works
+                    console.log('Delete me if the short version works');
+                    // body.forEach(function(d) {
+                    //     d.key = +d.key;
+                    //     d.value.MNTM = ncdcToFahrenheit(d3.mean(d.value.MNTM));
+                    //     d.value.MMXT = ncdcToFahrenheit(d3.mean(d.value.MMXT));
+                    //     d.value.MMNT = ncdcToFahrenheit(d3.mean(d.value.MMNT));
+                    //     d.value.EMXT = ncdcToFahrenheit(d3.mean(d.value.EMXT));
+                    //     d.value.EMNT = ncdcToFahrenheit(d3.mean(d.value.EMNT));
+                    // });
+                    body.forEach(function(d) {
+                        ['MNTM' 'MMXT' 'MMNT' 'EMXT' 'EMNT'].forEach(function(k) {
+                            d.value[k] = ncdcToFahrenheit(d3.mean(d.value[k]));
+                        });
+                    });
+                    cb(null, body);
+                },
+                error: function (jqXHR) {
+                    cb(jqXHR, null)
+                }
             });
+        });
+}
 
-            cb(null, data);
-        },
-        error: function (jqXhr, textStatus, errorThrown) {
-            cb(errorThrown, null);
-        }});
+function onDataOrChartError(err) {
+    console.log('onDataOrChartError');
+    hideLoading();
+    showError();
+}
+
+function onDataAndChartResults(res) {
+    var buckets = svg.select('g.buckets');
+    hideLoading();
+    updateBuckets(buckets, res.data);
+    remeasureBuckets(buckets, res.chartDims);
+    remeasureLabel(svg, res.chartDims);
+
+    d3.selectAll('.result svg .axis text')
+        .classed("animate-in", true);
+
+    d3.selectAll('.result svg .label')
+        .classed("animate-in", true);
 }
 
 function onPageLoad() {
@@ -489,17 +591,11 @@ function onPageLoad() {
         chartDims: remeasureChart,
     }, function (err, res) {
         var svg = d3.select('.result svg');
-        var buckets = svg.select('g.buckets');
-        hideLoading();
-        updateBuckets(buckets, res.data);
-        remeasureBuckets(buckets, res.chartDims);
-        remeasureLabel(svg, res.chartDims);
-
-        d3.selectAll('.result svg .axis text')
-            .classed("animate-in", true);
-
-        d3.selectAll('.result svg .label')
-            .classed("animate-in", true);
+        if (res != null && err === null) {
+            onDataAndChartResults(res);
+        } else {
+            onDataOrChartError(err);
+        }
     });
 }
 

@@ -15,6 +15,7 @@
              [macros :as sm] ]
             [throttler.core :refer [ throttle-fn ]])
   (:use [annual-weather utils]
+        [clojure.tools.logging]
         [clj-utils.core]
         [uncomplicate.fluokitten core jvm]))
 

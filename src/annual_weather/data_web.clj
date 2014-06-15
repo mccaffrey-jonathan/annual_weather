@@ -52,17 +52,20 @@
 
 (def should-log true)
 
-(defn find-good-station-near
-  [q addr]
-  (let [geocoded-addr (query-geocode addr)
-        stations (->> geocoded-addr
+(defn find-good-station-near-geocoded
+  [q geocoded]
+  (info "find-good-station-near-geocoded q " q " geocoded "geocoded)
+  (let [stations (->> geocoded
                       fuzzy-bound-geocode-loc
-                      (query-stations q addr))]
-        (find-good-near-geocode geocoded-addr stations)))
+                      ((fn [x] 
+                        (info "bound " x)
+                        x))
+                      (query-stations q "TODO INCLUDE ADDR"))]
+        (find-good-near-geocoded geocoded stations)))
 
-(defn data-for-human-location [human-loc]
-  (let [st (find-good-station-near
-             (merge (recent-enough-dates) query-n) human-loc)] 
+(defn data-for-geocoded-location [geocoded]
+  (let [st (find-good-station-near-geocoded
+             (merge (recent-enough-dates) query-n) geocoded)]
     (if should-log (info "Chose station" (st :name)
                          "with coverage" (st :datacoverage)
                          "located at lat: " (st :latitude) ", lng:" (st :longitude)))
@@ -72,6 +75,10 @@
                :stationid (st :id))
         (recent-dates-for-station st)))))
 
+(defn data-for-human-location [human-loc]
+  (data-for-geocoded-location
+    (query-geocode human-loc)))
+
 (def mock-data false)
 
 (defn api-handler []
@@ -79,12 +86,21 @@
     (read-string (slurp "la-data-d3"))
     (data-for-human-location "San Jose, CA")))
 
+(defn nil-handler [b]
+  nil)
+
+; TODO handle errors more pleasantly
+; Catch exceptions and serve up a nice response
+(defn data-handler [b]
+  (if-let [d (data-for-geocoded-location (b :geocoded))] 
+    {:body d}))
+
 ; TODO handle errors more pleasantly
 ; Catch exceptions and serve up a nice response
 (defn search-handler [s]
-  (if mock-data
-    (read-string (slurp "la-data-d3"))
-    (do
-       (println "search for query '" s "'")
-       (data-for-human-location s))))
+  {:body (if mock-data
+           (read-string (slurp "la-data-d3"))
+           (do
+             (println "search for query '" s "'")
+             (data-for-human-location s))) })
 

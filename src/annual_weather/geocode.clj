@@ -132,7 +132,7 @@
     fuzzy-bound-geocode-loc
     window-to-gmaps-url)
 
-(defn find-good-near-geocode
+(defn find-good-near-geocoded
   [{{{loc-lat :lat loc-lng :lng} :location} :geometry} stations]
   (letfn [(distance-to-location [{stat-lat :latitude stat-lng :longitude}]
             (LatLngTool/distance

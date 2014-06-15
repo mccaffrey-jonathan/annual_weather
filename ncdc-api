@@ -1,3 +1,9 @@
+You Almost certainly should switch to client-side geocoding !
+Done !  Basically !
+
+
+
+
 Allows 1000 requests per diem.  With a bit of caching on your end, this sound slike plenty to get off the gorund.
 
 The token is supposed to be passed in the header but I cannot figure out how!
@@ -113,8 +119,12 @@ If we are seeing modest load, collect statistics about lookups and density for e
 
 geocoding -> Addres
 
-Click on axis for celsius?  Option in URL
+Click on axis for celsius?  Option in URL ?  Do it based on regions ?
 
 BUG Hovering your mouse over the page during loading blocks visibilitu of the graph !  Weird !
 
 TODO fancy opening of graphics from median line
+
+TODO keywordize middleware or options for json-params ?
+
+TODO Better logging for empty/error results from HTTP requests

@@ -1,6 +1,5 @@
 (ns annual-weather.city-list
-  (:require 
-    [annual-weather [web-cache :as web-cache]
+  (:require [annual-weather [web-cache :as web-cache]
                     [data-web :as data-web]]
     [clojure.java.io :as io]
             [clojure.string :as string])
@@ -104,6 +103,10 @@
       )))
 
 (defn -main [countryname admin1name cityname]
+  "The files for this program can be obtained from
+  http://download.geonames.org/export/dump/
+  specifically countryInfo.txt admin1CodesASCII.txt adn
+  citiesXXX.txt"
   (with-open [countryrdr (io/reader countryname)
               admin1rdr (io/reader admin1name)
               cityrdr (io/reader cityname)]
