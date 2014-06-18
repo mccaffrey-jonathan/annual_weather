@@ -147,6 +147,7 @@ function remeasureBuckets(buckets, dims) {
 
     var bucket = buckets.selectAll(".bucket");
     bucket.attr("transform", function(d) {
+            console.log(d.key, x(d.key));
             return "translate(" + x(d.key) + ",0)";
         })
 
@@ -303,8 +304,15 @@ function updateBuckets(buckets,  data) {
 
 function remeasureChart(cb) {
 
-    var windowHeight = $(window).height(),
-        windowWidth = screen.width,
+    // An SVG element with a bottom-right origin.
+    var outerSvg = d3.select(".result svg");
+
+    // Using SVG element width handles changing page zoom well
+    var windowWidth = $('.result svg').width(),
+        windowHeight = $('.result svg').height(),
+
+//     var windowHeight = $(window).height(),
+//         windowWidth = screen.width,
             //$(window).width(),
         numBuckets = 12,
         yAxisTextOffset = 45,
@@ -319,6 +327,8 @@ function remeasureChart(cb) {
 
     console.log(windowWidth);
     console.log(windowHeight);
+    console.log(width);
+    console.log(height);
 
     var centerTextInColumn = centerTextInColumnOfWidth(barSpace);
 
@@ -330,11 +340,6 @@ function remeasureChart(cb) {
     var y = d3.scale.linear()
         .domain([-20, 120])
         .range([height, 0]);
-
-    // An SVG element with a bottom-right origin.
-    var outerSvg = d3.select(".result svg");
-        // .attr("width", width + margin.left + margin.right)
-        // .attr("height", height + margin.top + margin.bottom);
 
     var svg = outerSvg.select('g')
         .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
