@@ -90,7 +90,8 @@
        ; TODO put location in loading title
        ; TODO more interesting font ?
        [:div
-        {:class "center-large"
+        {:id "loading-label"
+         :class "center-large"
          :style "color: #7C8479;"}
-        "Loading YOURTOWN"] ] ]]))
+        "Searching"] ] ]]))
 

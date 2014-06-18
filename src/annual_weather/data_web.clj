@@ -95,8 +95,6 @@
   (if-let [d (data-for-geocoded-location (b :geocoded))] 
     {:body d}))
 
-; TODO handle errors more pleasantly
-; Catch exceptions and serve up a nice response
 (defn search-handler [s]
   {:body (if mock-data
            (read-string (slurp "la-data-d3"))

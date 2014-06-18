@@ -519,14 +519,18 @@ function loadData(cb) {
     qs = getQueryStrings();
 
     var geocoder = new google.maps.Geocoder();
-    var humanLocation = decodeURIComponent(qs['address']);
-    console.log(humanLocation);
-    geocoder.geocode({ 'address': humanLocation },
-        function(results, status) {
+    var humanPlace = decodeURIComponent(qs['place']);
+    console.log(humanPlace);
+    geocoder.geocode({ 'address': humanPlace },
+        function(res, status) {
             if (status != google.maps.GeocoderStatus.OK) {
-                // TODO report error
-                return;
+                // TODO appropriate error object
+                cb("We couldn't find your place !", null);
             }
+
+            // TODO separation of concerns for status updates
+            // Maybe use jquery triggers ?
+            $('#id').html('Loading ' + res[0].address_components[0].long_name);
 
             // POST due to large JSON body
             $.ajax({
@@ -534,23 +538,11 @@ function loadData(cb) {
                 contentType: 'application/json',
                 url: '/api/data',
                 data: JSON.stringify({
-                    humanLocation: qs['address'],
-                    geocoded: GeocoderResultToJSONObject(results[0])}),
+                    humanPlace: humanPlace,
+                    geocoded: GeocoderResultToJSONObject(res[0])}),
                 success: function(body) {
-
-                    // Convert strings to numbers.
-                    // TODO Delete me if the short version works
-                    console.log('Delete me if the short version works');
-                    // body.forEach(function(d) {
-                    //     d.key = +d.key;
-                    //     d.value.MNTM = ncdcToFahrenheit(d3.mean(d.value.MNTM));
-                    //     d.value.MMXT = ncdcToFahrenheit(d3.mean(d.value.MMXT));
-                    //     d.value.MMNT = ncdcToFahrenheit(d3.mean(d.value.MMNT));
-                    //     d.value.EMXT = ncdcToFahrenheit(d3.mean(d.value.EMXT));
-                    //     d.value.EMNT = ncdcToFahrenheit(d3.mean(d.value.EMNT));
-                    // });
                     body.forEach(function(d) {
-                        ['MNTM' 'MMXT' 'MMNT' 'EMXT' 'EMNT'].forEach(function(k) {
+                        ['MNTM', 'MMXT', 'MMNT', 'EMXT', 'EMNT'].forEach(function(k) {
                             d.value[k] = ncdcToFahrenheit(d3.mean(d.value[k]));
                         });
                     });
@@ -565,11 +557,13 @@ function loadData(cb) {
 
 function onDataOrChartError(err) {
     console.log('onDataOrChartError');
+    console.log(err);
     hideLoading();
     showError();
 }
 
 function onDataAndChartResults(res) {
+    var svg = d3.select('.result svg');
     var buckets = svg.select('g.buckets');
     hideLoading();
     updateBuckets(buckets, res.data);
@@ -591,7 +585,7 @@ function onPageLoad() {
         chartDims: remeasureChart,
     }, function (err, res) {
         var svg = d3.select('.result svg');
-        if (res != null && err === null) {
+        if (res != null && res != undefined) {
             onDataAndChartResults(res);
         } else {
             onDataOrChartError(err);
