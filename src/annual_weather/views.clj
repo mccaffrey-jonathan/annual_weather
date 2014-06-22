@@ -105,9 +105,8 @@
       ; TODO why isn't error in the middle of the page?
       [:div
         {:class "center-transparent-in-relative error hidden"}
-       [:div {:class "center-large"
-              :style "color: #7C8479;
-                     margin-left: auto;
+       [:div {:class "center-large error-heading"
+              :style "margin-left: auto;
                      margin-right: auto;" }
         "Hmm! We couldn't find your place!"]]
 
@@ -125,5 +124,5 @@
        [:div
         {:id "loading-label"
          :class "center-large loading-label" }
-        "Searching"] ] ]]))
+        "Searching..."] ] ]]))
 

@@ -50,30 +50,32 @@
                                      (t/years 10)))
       :enddate  (st :maxdate)}))
 
-(def should-log true)
-
 (defn find-good-station-near-geocoded
   [q geocoded]
-  (info "find-good-station-near-geocoded q " q " geocoded "geocoded)
+  (debug "find-good-station-near-geocoded q " q " geocoded "geocoded)
   (let [stations (->> geocoded
                       fuzzy-bound-geocode-loc
-                      ((fn [x] 
-                        (info "bound " x)
-                        x))
+;                       ((fn [x] 
+;                         (info "bound " x)
+;                         x))
                       (query-stations q "TODO INCLUDE ADDR"))]
         (find-good-near-geocoded geocoded stations)))
 
 (defn data-for-geocoded-location [geocoded]
-  (let [st (find-good-station-near-geocoded
-             (merge (recent-enough-dates) query-n) geocoded)]
-    (if should-log (info "Chose station" (st :name)
-                         "with coverage" (st :datacoverage)
-                         "located at lat: " (st :latitude) ", lng:" (st :longitude)))
-    (query-data-d3-style
-      (merge
-        (assoc query-n 
-               :stationid (st :id))
-        (recent-dates-for-station st)))))
+  (if-let [st (find-good-station-near-geocoded
+                (merge (recent-enough-dates) query-n) geocoded)]
+    (do
+      (debug "Chose station" (st :name)
+                  "with coverage" (st :datacoverage)
+                  "located at lat: " (st :latitude) ", lng:" (st :longitude))
+      (query-data-d3-style
+        (merge
+          (assoc query-n 
+                 :stationid (st :id))
+          (recent-dates-for-station st))))
+    (do
+      (debug "No stations found!")
+      nil)))
 
 (defn data-for-human-location [human-loc]
   (data-for-geocoded-location
