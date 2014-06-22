@@ -9,9 +9,18 @@
     transition: all 0.25s ease-out;
 }
 
-.buckets:hover > .bucket:not(:hover)
+/* Fade out non-hovered buckets and ticks */
+.buckets:hover > .bucket:not(:hover),.buckets.pseudo-hover > .bucket:not(.pseudo-hover)
 {
     opacity: 0.25;   
+    -webkit-transition: all 0.5s ease-out;
+    transition: all 0.5s ease-out;
+}
+
+.x.axis:hover > .tick:not(:hover), .x.axis.pseudo-hover > .tick:not(.pseudo-hover)
+{
+    /* d3 axis contains inline style opacity, we need to override */
+    opacity: 0.25 !important;
     -webkit-transition: all 0.5s ease-out;
     transition: all 0.5s ease-out;
 }
@@ -20,8 +29,10 @@
     display:none;
 }
 
-.bucket:hover .bucket-label
+.bucket:hover .bucket-label,.bucket.pseudo-hover .bucket-label
 {
     opacity: 1;
 }
+
+
 

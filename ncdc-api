@@ -128,3 +128,18 @@ TODO fancy opening of graphics from median line
 TODO keywordize middleware or options for json-params ?
 
 TODO Better logging for empty/error results from HTTP requests
+
+P0
+station queries are not the fastest !
+    This looks OK with profiling.  Keep an eyeball out
+Index + search page that does not suck !
+Touch hover that works
+Confirm happy with printing !
+Make sure no scrolling
+
+P1
+MissionScript commercial license
+Figure out data model to export for SEO, with proper page titles and meta ?
+Feedback & Comments
+Embedding
+Eco-colors

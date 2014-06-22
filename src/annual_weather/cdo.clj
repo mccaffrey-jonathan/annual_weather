@@ -51,6 +51,8 @@
             (query endpoint
                    (assoc q :limit 1000 :offset query-offset)))
           grown-results (fv/catvec accum (if results results []))]
+          (info ret)
+          (info limit offset cnt)
       (if (< cnt (+ limit offset))
         grown-results
         (recur grown-results

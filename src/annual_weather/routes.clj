@@ -20,7 +20,7 @@
 (defroutes site-routes
   (GET "/site/search" [] (search-page))
   (GET "/site/chart" [] (chart-page))
-  (route/resources "/site" :root "public"))
+  (route/resources "/res" :root "public"))
 
 (defroutes api-routes
   (-> (POST "/api/data" {params :params} [] 

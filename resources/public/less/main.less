@@ -69,20 +69,20 @@ body {
     stroke-width: 2;
 }
 
-.bucket.odd .middle {
+.bucket:nth-child(odd) .middle {
     stroke: @odd-middle-stroke-color;
 }
 
-.bucket.odd .box {
+.bucket:nth-child(odd) .box {
     fill: @odd-box-fill-color;
     stroke: @odd-middle-stroke-color;
 }
 
-.bucket.odd .whisker-line {
+.bucket:nth-child(odd) .whisker-line {
     stroke: @odd-whisker-stroke-color;
 }
 
-.bucket.odd .whisker-end {
+.bucket:nth-child(odd) .whisker-end {
     stroke: @odd-whisker-end-stroke-color;
 }
 
@@ -95,13 +95,13 @@ body {
     /*font-family:Impact, Charcoal, sans-serif;*/
 }
 
-.axis text.odd.animate-in {
+.x.axis .tick:nth-child(odd) text.animate-in {
     fill: @odd-box-fill-color;
     -webkit-transition: all 1s linear;
     transition: all 1s linear;
 }
 
-.axis text.even.animate-in {
+.x.axis .tick:nth-child(even) text.animate-in {
     fill: @box-fill-color;
     -webkit-transition: all 1s linear;
     transition: all 1s linear;
@@ -140,15 +140,15 @@ line.bucket-label.mean  {
     stroke: @middle-stroke-color;
 }
 
-.odd line.bucket-label.extreme-max,.odd line.bucket-label.extreme-min {
+.bucket:nth-child(odd) line.bucket-label.extreme-max,.bucket:nth-child(odd) line.bucket-label.extreme-min {
     stroke: @odd-whisker-end-stroke-color;
 }
 
-.odd line.bucket-label.mean-max,.odd line.bucket-label.mean-min {
+.bucket:nth-child(odd) line.bucket-label.mean-max,.bucket:nth-child(odd) line.bucket-label.mean-min {
     stroke: @odd-box-stroke-color;
 }
 
-.odd line.bucket-label.mean  {
+.bucket:nth-child(odd) line.bucket-label.mean  {
     stroke: @odd-middle-stroke-color;
 }
 
@@ -182,12 +182,16 @@ line.bucket-label.mean  {
   stroke: #000;
 }
 
-/* Styling and sizing for label in corner */
 @font-face {
     font-family: MissionScript;
-    src: url("/otf/Mission-Script.otf") format("opentype");
+    src: url("/res/otf/Mission-Script.otf") format("opentype");
 }
 
+.loading-label {
+  font-family: "MissionScript", sans-serif;
+}
+
+/* Styling and sizing for label in corner */
 .label {
   font-family: "MissionScript", sans-serif;
 }

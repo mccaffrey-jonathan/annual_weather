@@ -10,24 +10,55 @@
     [:head
      [:meta {:http-equiv "Content-Type"
              :content "text/html;charset=utf-8"}]
+     [:meta {:name "viewport"
+             :content "width=device-width, initial-scale=1"}]
+     [:title "Buentiempo!"] 
+     [:link {:rel "stylesheet/less"
+             :type "text/css"
+             :href "/res/less/search.less"}]
      (include-css
        "http://netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css")
      (include-js
        "http://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min.js"
        "http://netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"
-       "js/search-page.js")
+       ; TODO don't use client-side LESS in production
+       "http://cdnjs.cloudflare.com/ajax/libs/less.js/1.6.3/less.min.js"
+       "/res/js/search-page.js")
      ]
     [:body
-     [:input 
-      {:type "search"
-       :id "place-search-bar"
-       :class "form-control"
-       :placeholder "Enter your place" }]
-     [:button 
-      {:type "submit"
-       :id "place-search-submit"
-       :class "btn btn-primary"}
-      "Search"]]))
+     [:h1 {:class "main-title"
+           :style "text-align: center;"}
+      "Buentiempo!"]
+     ; [:div {:class "pagination-center"}
+     [:div {:class "site-wrapper"}
+      [:div {:class "site-wrapper-inner"}
+       [:div {:style "text-align: center;
+                     vertical-align: middle;"}
+        [:p "Chart how the climate changes over each year in your place" ]
+        [:div {:class "container"}
+        [:div {:class "row"}
+         [:form {:class "form-horizontal" :role "form"}
+         [:div {:class "form-group"}
+;                :style "display: inline-block;"}
+          [:div 
+           {:class "col-md-6 col-md-offset-3"}
+           [:div {:class "form-group"}
+            [:label {:class "sr-only"
+                     :for "place-search-bar"}
+             "Address or place" ]
+            [:input 
+             {:type "search"
+              :id "place-search-bar"
+              :class "form-control"
+              :placeholder "Chart climate for your place" }]]]
+          [:div 
+           {:class "col-md-2"}
+           [:button 
+            {:type "submit"
+             :id "place-search-submit"
+             :class "btn btn-block btn-primary"}
+            "Go !"]]]]]]]]]
+     ]))
 
 (defn chart-page []
   (html5
@@ -35,21 +66,23 @@
 
      [:meta {:http-equiv "Content-Type"
              :content "text/html;charset=utf-8"}]
-     [:title "Hello Worl"] 
+     [:meta {:name "viewport"
+             :content "width=device-width, initial-scale=1"}]
+     [:title "Buentiempo Chart !"] 
      [:link {:rel "stylesheet/less"
              :type "text/css"
-             :href "less/main.less"}]
+             :href "/res/less/main.less"}]
      [:link {:rel "stylesheet/less"
              :media "print"
              :type "text/css"
-             :href "less/print.less"}]
+             :href "/res/less/print.less"}]
      [:link {:rel "stylesheet/less"
              :media "screen"
              :type "text/css"
-             :href "less/screen.less"}]
+             :href "/res/less/screen.less"}]
      [:link {:rel "stylesheet/less"
              :type "text/css"
-             :href "less/spinner.less"}]
+             :href "/res/less/spinner.less"}]
      (include-js ; "http://d3js.org/d3.v3.min.js"
                  "http://cdnjs.cloudflare.com/ajax/libs/d3/3.4.8/d3.min.js"
                  ; "http://code.jquery.com/jquery-1.11.0.min.js"
@@ -61,7 +94,7 @@
                  ; "js/underscore.js"
                  "http://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.6.0/underscore-min.js"
                  (format "https://maps.googleapis.com/maps/api/js?key=%s" google-maps-api-key)
-                 "js/chart.js")]
+                 "/res/js/chart.js")]
     [:body
      [:div 
       {:style "position:relative;
@@ -91,7 +124,6 @@
        ; TODO more interesting font ?
        [:div
         {:id "loading-label"
-         :class "center-large"
-         :style "color: #7C8479;"}
+         :class "center-large loading-label" }
         "Searching"] ] ]]))
 

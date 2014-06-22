@@ -49,6 +49,24 @@ function centerTextInColumnOfWidth(w) {
     }
 }
 
+function formatLatitude(lat) {
+    var trunc = Math.round(lat*100)/100;
+    var dir = 'N';
+    if (trunc < 0) {
+        dir = 'S';
+    }
+    return Math.abs(trunc).toString() + '\u00B0' + dir;
+}
+
+function formatLongitude(lng) {
+    var trunc = Math.round(lng*100)/100;
+    var dir = 'E';
+    if (trunc < 0) {
+        dir = 'W';
+    }
+    return Math.abs(trunc).toString() + '\u00B0' + dir;
+}
+
 function formatFahrenheit(d) {
   return d + "\u00B0F";
 }
@@ -90,13 +108,19 @@ function appendLabel(svg) {
         .append("div");
 }
 
-function remeasureLabel(svg, chartDims) {
-    var cityAndState = "Los Angeles, CA";
-    var latAndLong = "43\u00B0N 37\u00B0W";
-    var climate = "Temperate Climate";
-    var flavorText = "300 Days of Sunshine";
-    var url = "wby.com/LosAngelesCA";
+// TODO return station result with data so that we can specify the station
+// name in the label, and add a /site/search query to directly load the
+// station.
+function updateLabel(svg, humanPlace, geocoded) {
+    var cityAndState = humanPlace;
+    var latAndLong = formatLatitude(geocoded.geometry.location.lat()) +
+        ' ' +
+        formatLongitude(geocoded.geometry.location.lng());
 
+    // var climate = "Temperate Climate";
+    // var flavorText = "300 Days of Sunshine";
+    var url = window.location.hostname + window.location.pathname + '/' + $.param({'place': geocoded.address_components[0].long_name})
+    
     // TODO templates
     bodyString = 
         '<div class="labeltop">' +
@@ -104,21 +128,16 @@ function remeasureLabel(svg, chartDims) {
             latAndLong + 
         '</div>' +
         // '<hr/>' +
-        '<div class="labelmid">' +
-            climate + '<br/>' + 
-            flavorText +
-        "</div>" +
+      //  '<div class="labelmid">' +
+      //      climate + '<br/>' + 
+      //      flavorText +
+      //  "</div>" +
         // '<hr/>' +
         '<div class="labelbot">' +
             '<a href="' + url + '">' + url + '</a>' +
         "</div>";
 
     var label = svg.select("g.label")
-        .attr("transform", "translate(" +
-                (chartDims.windowWidth - 350).toString() +
-                ", " +
-                (chartDims.windowHeight - 250).toString() +
-                ")");
 
     label.select(".war-foreign-object")
         .attr("width", 500)
@@ -130,7 +149,21 @@ function remeasureLabel(svg, chartDims) {
         .html(bodyString);
 }
 
-function remeasureBuckets(buckets, dims) {
+function remeasureLabel(svg, chartDims) {
+    var label = svg.select("g.label")
+        .attr("transform", "translate(" +
+                (chartDims.windowWidth - 500).toString() +
+                ", " +
+                (chartDims.windowHeight - 250).toString() +
+                ")");
+
+    var tooSmall = (chartDims.windowHeight < 480 || chartDims.windowWidth < 640)
+    label.classed('hidden', tooSmall);
+}
+
+
+function remeasureBuckets(svg, dims) {
+    var buckets = svg.select('g.buckets');
 
     // TODO use dims directly
     var x = dims.x,
@@ -147,7 +180,6 @@ function remeasureBuckets(buckets, dims) {
 
     var bucket = buckets.selectAll(".bucket");
     bucket.attr("transform", function(d) {
-            console.log(d.key, x(d.key));
             return "translate(" + x(d.key) + ",0)";
         })
 
@@ -191,8 +223,8 @@ function remeasureBuckets(buckets, dims) {
       .attr("x1", 0)
       .attr("x2", 0);
 
-    bucket.filter(function (d) {return isOdd(d.key); })
-        .classed("odd", true);
+//   bucket.filter(function (d) {return isOdd(d.key); })
+//       .classed("odd", true);
 
     bucket.selectAll(".whisker-line.top")
       .attr("y1", function (d) {
@@ -267,9 +299,21 @@ function remeasureBuckets(buckets, dims) {
     setBucketLabelTemp(d3.selectAll(".mean"), function (d) {
         return d.value.MNTM;
     });
+
+    // TODO make .hover work for touch events !
+    $('.bucket').hover(function hoverIn(ev) {
+        svg.selectAll('.x.axis').classed('pseudo-hover', true);
+        svg.selectAll('.tick:nth-child(' + ($(this).index()+1).toString() + ')')
+            .classed('pseudo-hover', true);
+
+    }, function hoverOut(ev) {
+        svg.selectAll('.tick').classed('pseudo-hover', false)
+        svg.selectAll('.x.axis').classed('pseudo-hover', false);
+    });
 }
 
-function updateBuckets(buckets,  data) {
+function updateBuckets(svg,  data) {
+    var buckets = svg.select('g.buckets');
     var bucket = buckets.selectAll(".bucket").data(data);
 
     var bucketEnter = bucket.enter()
@@ -325,10 +369,10 @@ function remeasureChart(cb) {
         barSpace = Math.floor(width / numBuckets) - 1,
         barWidth = (3*barSpace)/4;
 
-    console.log(windowWidth);
-    console.log(windowHeight);
-    console.log(width);
-    console.log(height);
+   //  console.log(windowWidth);
+   //  console.log(windowHeight);
+   //  console.log(width);
+   //  console.log(height);
 
     var centerTextInColumn = centerTextInColumnOfWidth(barSpace);
 
@@ -417,11 +461,23 @@ function remeasureChart(cb) {
     var gx = svg.select("g.x.axis")
         .attr("transform", "translate(0," + height + ")")
         .call(xAxis);
+
+    // Add a parallel hover class to select ticks corresponding to months
+    $('.x.axis .tick').hover(function hoverIn(ev) {
+        svg.selectAll('.bucket').classed('pseudo-hover', false)
+        svg.selectAll('.buckets').classed('pseudo-hover', true);
+        svg.selectAll('.bucket:nth-child(' + ($(this).index()+1).toString() + ')')
+            .classed('pseudo-hover', true);
+
+    }, function hoverOut(ev) {
+        svg.selectAll('.bucket').classed('pseudo-hover', false)
+        svg.selectAll('.buckets').classed('pseudo-hover', false);
+    });
     
-    gx.selectAll("text")
-        .filter(isEven).classed("even", true);
-    gx.selectAll("text")
-        .filter(isOdd).classed("odd", true);
+//    gx.selectAll("text")
+//        .filter(isEven).classed("even", true);
+//    gx.selectAll("text")
+//        .filter(isOdd).classed("odd", true);
 
     gx.selectAll("text")
         .call(centerTextInColumn);
@@ -551,7 +607,9 @@ function loadData(cb) {
                             d.value[k] = ncdcToFahrenheit(d3.mean(d.value[k]));
                         });
                     });
-                    cb(null, body);
+                    cb(null, {'body': body,
+                              'geocoded': res[0],
+                              'humanPlace': humanPlace});
                 },
                 error: function (jqXHR) {
                     cb(jqXHR, null)
@@ -561,18 +619,19 @@ function loadData(cb) {
 }
 
 function onDataOrChartError(err) {
-    console.log('onDataOrChartError');
-    console.log(err);
+    // console.log('onDataOrChartError');
+    // console.log(err);
     hideLoading();
     showError();
 }
 
 function onDataAndChartResults(res) {
     var svg = d3.select('.result svg');
-    var buckets = svg.select('g.buckets');
     hideLoading();
-    updateBuckets(buckets, res.data);
-    remeasureBuckets(buckets, res.chartDims);
+    window.document.title = 'Buentiempo Chart ! - ' + res.data.geocoded.address_components[0].long_name;
+    updateBuckets(svg, res.data.body);
+    updateLabel(svg, res.data.humanPlace, res.data.geocoded);
+    remeasureBuckets(svg, res.chartDims);
     remeasureLabel(svg, res.chartDims);
 
     d3.selectAll('.result svg .axis text')
@@ -590,10 +649,10 @@ function onPageLoad() {
         chartDims: remeasureChart,
     }, function (err, res) {
         var svg = d3.select('.result svg');
-        if (res != null && res != undefined) {
-            onDataAndChartResults(res);
-        } else {
+        if (err != null) {
             onDataOrChartError(err);
+        } else {
+            onDataAndChartResults(res);
         }
     });
 }
@@ -603,8 +662,7 @@ function onPageResize() {
         chartDims: remeasureChart,
     }, function (err, res) {
         var svg = d3.select('.result svg');
-        var buckets = svg.select('g.buckets');
-        remeasureBuckets(buckets, res.chartDims);
+        remeasureBuckets(svg, res.chartDims);
         remeasureLabel(svg, res.chartDims);
     });
 }

@@ -5,7 +5,7 @@ function onPageLoad() {
         var params = {
             'place': humanPlace,
         };
-        window.location.href= '/site/chart?' + $.param(params);
+        window.location.href = '/site/chart?' + $.param(params);
     }).keyup(function(e) {
         if(e.keyCode == 13) {
             $(this).trigger('submit');
