@@ -8,7 +8,7 @@ function onPageLoad() {
         window.location.href = '/site/chart?' + $.param(params);
     }).keyup(function(e) {
         if(e.keyCode == 13) {
-            $(this).trigger('submit');
+            $('#place-search-bar').trigger('submit');
         }
     });
 
