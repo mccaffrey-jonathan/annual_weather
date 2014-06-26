@@ -9,7 +9,7 @@
             [ring.adapter.jetty :as jetty]
             [ring.middleware.json :as json]
             [ring.middleware.logger :as logger]
-            [ring.middleware.reload :as reload]
+            ; [ring.middleware.reload :as reload]
             [ring.middleware.keyword-params :as keyword-params]
             [ring.util.codec :as rcodec]
             [ring.util.response :as rresponse]
@@ -50,7 +50,7 @@
 (def app
   (-> main-routes
       (logger/wrap-with-logger)
-      (reload/wrap-reload reload-on-request)
+      ; (reload/wrap-reload reload-on-request)
       (keyword-params/wrap-keyword-params)
       (wrap-base-url)))
 
