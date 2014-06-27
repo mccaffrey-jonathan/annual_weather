@@ -1,5 +1,5 @@
 You Almost certainly should switch to client-side geocoding !
-Done !  Basically !
+
 
 
 
@@ -130,16 +130,28 @@ TODO keywordize middleware or options for json-params ?
 TODO Better logging for empty/error results from HTTP requests
 
 P0
+Key !  Maybe drawn over like white-board marker overlay !
+
 station queries are not the fastest !
     This looks OK with profiling.  Keep an eyeball out
 Index + search page that does not suck !
-Touch hover that works
-Confirm happy with printing !
+    It is not sucky enough for the moment
 Make sure no scrolling
+    * Looks good
+Pre-loaded DB migration
+    * Done
+Confirm happy with printing !
+    * Need Ink- magenta !
 
 P1
-MissionScript commercial license
+Eco-colors
 Figure out data model to export for SEO, with proper page titles and meta ?
+Trio from london book with precipitation ?
+MissionScript commercial license
+Touch hover that works
+    * This seems to be generally hard
 Feedback & Comments
 Embedding
-Eco-colors
+Search bar on chart page.
+
+P2? Multple city compare ?
