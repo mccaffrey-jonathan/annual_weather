@@ -5,15 +5,39 @@
     com.javadocmd.simplelatlng.util.LengthUnit
     com.javadocmd.simplelatlng.window.RectangularWindow)
   (:require [clojure [pprint :as pp]]
+            [clojure.set]
             [org.httpkit.client :as http]
             [schema [core :as s]
                     [macros :as sm]]
-            [throttler.core :refer [throttle-fn]])
+            [throttler.core :as throttler])
   (:use [annual-weather cdo utils]
         [clj-utils.core]))
 
 (def-> unpack-geocode
   deref)
+
+(def geocode-throttler (throttler/fn-throttler 750 :day 250))
+
+(def pretty-types 
+  #{"neighborhood" "locality" "administrative_area_level_1" "administrative_area_level_2"})
+
+(defn pretty-name-for-geocoded [results]
+  ; TODO this is not pretty
+  ((first (filter #(not (empty? (clojure.set/intersection
+                                  pretty-types
+                                  (set (% :types)))))
+                  results))
+   :formatted_address))
+
+(defn query-reverse-geocode-uncached-unthrottled [latLng]
+  (let [res
+        (unpack-http-kit-json-res
+          (http/get
+            "http://maps.googleapis.com/maps/api/geocode/json"
+            {:query-params
+             ; TODO try :location if that doesnt work
+             {:latlng (str (.getLatitude latLng) "," (.getLongitude latLng)) }}))]
+    (if res (res :results))))
 
 (defn query-geocode-uncached-unthrottled [q]
   (let [res (unpack-http-kit-json-res
@@ -24,8 +48,11 @@
                   :sensor false }}))]
     (if res (get-in res [:results 0]))))
 
+(def query-reverse-geocode-uncached
+  (geocode-throttler query-reverse-geocode-uncached-unthrottled))
+
 (def query-geocode-uncached 
-  (throttle-fn query-geocode-uncached-unthrottled 750 :day 250))
+  (geocode-throttler query-geocode-uncached-unthrottled))
 
 ; TODO does this work outside of NW demi-sphere?
 (defn window-to-gmaps-url

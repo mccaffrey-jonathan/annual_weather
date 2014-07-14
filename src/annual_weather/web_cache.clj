@@ -14,6 +14,7 @@
      command
      conversion
      core
+     query
      joda-time
      [operators :as op]]
     [org.httpkit.client :as http]
@@ -197,3 +198,6 @@
                 (maybe-write-db q-rest stations)
                 stations))))))
 
+(defn list-cached-stations []
+  (monger.collection/find-maps @connected-db "stationWebCache")
+  )

@@ -17,6 +17,7 @@
                  [clj-time "0.6.0"]
                  [throttler "1.0.0"]
                  [environ "0.5.0"]
+                 [org.clojure/data.xml "0.0.7"]
                  ; TODO better ns name, and export external deps
                  ; [clj-utils "LATEST"]
                  ;
@@ -30,6 +31,7 @@
                  [ring.middleware.logger "0.4.0"]
                  [ring/ring-jetty-adapter "1.1.6"]
                  [ring/ring-json "0.2.0"]
+                 [com.cemerick/url "0.1.1"]
 
                  ; DB
                  [com.novemberain/monger "2.0.0-rc1"]

@@ -108,11 +108,46 @@ function appendLabel(svg) {
         .append("div");
 }
 
+function appendCoachMarks(svg) {
+    var dim = svg.append("rect")
+        .classed("coach-marks dim", true)
+        .classed("hidden", true);
+
+    $(svg[0]).click(function(ev) {
+        hideCoachMarks(svg)
+    });
+}
+
+function remeasureCoachMarks(svg, dims) {
+    var w = $(svg[0]).width(),
+        h = $(svg[0]).height();
+
+    svg.select(".coach-marks.dim")
+        .attr("width", w)
+        .attr("height", h)
+        .attr("x", 0)
+        .attr("y", 0)
+        .attr("fill", "black")
+        .attr("fill-opacity", 0.7);
+}
+
+var localityOrder = ["neighborhood", "locality", "administrative_area_level_3", "administrative_area_level_2", "administrative_area_level_1"];
+// How to return value orm for each loop ?
+function localityName(geocoded) {
+    comp = _.find(geocoded.address_components, function(comp) {
+        inter = _.intersection(comp.types, localityOrder);
+        console.log(inter.length);
+        return inter.length > 0;
+    });
+    return comp.long_name;
+}
+
 // TODO return station result with data so that we can specify the station
 // name in the label, and add a /site/search query to directly load the
 // station.
 function updateLabel(svg, humanPlace, geocoded) {
-    var cityAndState = humanPlace;
+    // TODO return a City, ST style name
+    var cityAndState = localityName(geocoded);
     var latAndLong = formatLatitude(geocoded.geometry.location.lat()) +
         ' ' +
         formatLongitude(geocoded.geometry.location.lng());
@@ -302,13 +337,9 @@ function remeasureBuckets(svg, dims) {
 
     // TODO make .hover work for touch events !
     $('.bucket').hover(function hoverIn(ev) {
-        svg.selectAll('.x.axis').classed('pseudo-hover', true);
-        svg.selectAll('.tick:nth-child(' + ($(this).index()+1).toString() + ')')
-            .classed('pseudo-hover', true);
-
+        pseudoHoverNthTick(svg, $(this).index());
     }, function hoverOut(ev) {
-        svg.selectAll('.tick').classed('pseudo-hover', false)
-        svg.selectAll('.x.axis').classed('pseudo-hover', false);
+        dropPseudoHoverTicks(svg)
     });
 }
 
@@ -464,14 +495,9 @@ function remeasureChart(cb) {
 
     // Add a parallel hover class to select ticks corresponding to months
     $('.x.axis .tick').hover(function hoverIn(ev) {
-        svg.selectAll('.bucket').classed('pseudo-hover', false)
-        svg.selectAll('.buckets').classed('pseudo-hover', true);
-        svg.selectAll('.bucket:nth-child(' + ($(this).index()+1).toString() + ')')
-            .classed('pseudo-hover', true);
-
+        pseudoHoverNthBucket(svg, $(this).index());
     }, function hoverOut(ev) {
-        svg.selectAll('.bucket').classed('pseudo-hover', false)
-        svg.selectAll('.buckets').classed('pseudo-hover', false);
+        dropPseudoHoverBuckets(svg);
     });
     
 //    gx.selectAll("text")
@@ -496,8 +522,7 @@ function remeasureChart(cb) {
 }
 
 function appendChart() {
-    var svg = d3.select(".result svg")
-        .append("g");
+    var svg = d3.select(".result svg").append("g");
     var gx = svg.append("g").attr("class", "x axis");
     var gy = svg.append("g").attr("class", "y axis little");
     var gy = svg.append("g").attr("class", "y axis medium");
@@ -507,6 +532,8 @@ function appendChart() {
     appendLabel(svg);
 
     svg.append("g").classed("buckets", true)
+
+    appendCoachMarks(svg);
 }
 
 function showLoading() {
@@ -519,6 +546,45 @@ function hideLoading() {
 
 function showError() {
     d3.selectAll('.error').classed({'hidden': false});
+}
+
+
+function pseudoHoverNthBucket(svg, zeroIndex) {
+    svg.selectAll('.bucket').classed('pseudo-hover', false)
+    svg.selectAll('.buckets').classed('pseudo-hover', true);
+    svg.selectAll('.bucket:nth-child(' + (zeroIndex+1).toString() + ')')
+        .classed('pseudo-hover', true);
+}
+
+function dropPseudoHoverBuckets(svg) {
+    svg.selectAll('.bucket').classed('pseudo-hover', false);
+    svg.selectAll('.buckets').classed('pseudo-hover', false);
+}
+
+
+function pseudoHoverNthTick(svg, zeroIndex) {
+    svg.selectAll('.x.axis').classed('pseudo-hover', true);
+    svg.selectAll('.tick:nth-child(' + (zeroIndex+1).toString() + ')')
+}
+
+function dropPseudoHoverTicks(svg) {
+   svg.selectAll('.tick').classed('pseudo-hover', false)
+   svg.selectAll('.x.axis').classed('pseudo-hover', false);
+}
+
+
+// TODO library to make this simple to lay down ?
+// Gray with gradient, white hand-drawn text
+function showCoachMarks(svg) {
+    svg.selectAll(".coach-marks").classed("hidden", false);
+    pseudoHoverNthBucket(svg, 8);
+    pseudoHoverNthTick(svg, 8);
+}
+
+function hideCoachMarks(svg) {
+    svg.selectAll(".coach-marks").classed("hidden", true);
+    dropPseudoHoverBuckets(svg);
+    dropPseudoHoverTicks(svg);
 }
 
 // TODO GitHub this snippet ?
@@ -633,6 +699,7 @@ function onDataAndChartResults(res) {
     updateLabel(svg, res.data.humanPlace, res.data.geocoded);
     remeasureBuckets(svg, res.chartDims);
     remeasureLabel(svg, res.chartDims);
+    remeasureCoachMarks(svg, res.chartDims);
 
     d3.selectAll('.result svg .axis text')
         .classed("animate-in", true);
@@ -653,6 +720,7 @@ function onPageLoad() {
             onDataOrChartError(err);
         } else {
             onDataAndChartResults(res);
+            showCoachMarks(svg);
         }
     });
 }
@@ -664,6 +732,7 @@ function onPageResize() {
         var svg = d3.select('.result svg');
         remeasureBuckets(svg, res.chartDims);
         remeasureLabel(svg, res.chartDims);
+        remeasureCoachMarks(svg, res.chartDims);
     });
 }
 

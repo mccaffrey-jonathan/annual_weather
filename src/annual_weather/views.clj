@@ -34,7 +34,7 @@
       [:div {:class "site-wrapper-inner"}
        [:div {:style "text-align: center;
                      vertical-align: middle;"}
-        [:p "Chart how the climate changes over each year in your place" ]
+        [:p "Enter your city, vacation destination, or any place below to chart its typical weather over each year" ]
         [:div {:class "container"}
         [:div {:class "row"}
          [:form {:class "form-horizontal" :role "form"}
@@ -50,11 +50,11 @@
              {:type "search"
               :id "place-search-bar"
               :class "form-control"
-              :placeholder "Chart climate for your place" }]]]
+              :placeholder "Address, or city and state" }]]]
           [:div 
            {:class "col-md-2"}
            [:button 
-            {:type "submit"
+            {:type "button"
              :id "place-search-submit"
              :class "btn btn-block btn-primary"}
             "Go !"]]]]]]]]]
