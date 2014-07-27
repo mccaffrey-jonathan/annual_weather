@@ -1,4 +1,7 @@
+'use strict';
+
 function setOnPrinting(beforePrint, afterPrint) {
+
     if (window.matchMedia) {
         var mediaQueryList = window.matchMedia('print');
         mediaQueryList.addListener(function(mql) {
@@ -13,6 +16,8 @@ function setOnPrinting(beforePrint, afterPrint) {
     window.onbeforeprint = beforePrint;
     window.onafterprint = afterPrint;
 }
+
+var coachMarkHighlightIndex = 8;
 
 var monthDictionary = {
     0: "Jan",
@@ -109,9 +114,12 @@ function appendLabel(svg) {
 }
 
 function appendCoachMarks(svg) {
-    var dim = svg.append("rect")
-        .classed("coach-marks dim", true)
-        .classed("hidden", true);
+    // TODO: this needs to go under a different transform
+    var dim = svg
+        .append("rect")
+        .classed({"coach-marks": true, "dim": true})
+        .classed("hidden", true)
+        .attr("mask", "url(#coach-mark-dim-mask)");
 
     $(svg[0]).click(function(ev) {
         hideCoachMarks(svg)
@@ -129,13 +137,107 @@ function remeasureCoachMarks(svg, dims) {
         .attr("y", 0)
         .attr("fill", "black")
         .attr("fill-opacity", 0.7);
+
+    svg.select("rect#mask-bg")
+        .attr("x", 0)
+        .attr("y", 0)
+        .attr("width", w)
+        .attr("height", h)
+
+    svg.selectAll(".margin-offset.coach-marks")
+       .attr("transform", "translate(" + dims.margin.left + "," + dims.margin.top + ")");
+
+    svg.selectAll(".margin-mask")
+       .attr("transform", "translate(" + dims.margin.left + "," + dims.margin.top + ")");
+
+    var plotHoleWidth = dims.barSpace*1.3,
+        plotHoleHeightFactor = 1.4;
+
+    var bucketMark = svg.selectAll(".bucket-mark")
+    bucketMark.attr("transform", function(d) {
+            return "translate(" + (dims.x(d.key) - plotHoleWidth/2 + 20) + ",0)";
+        });
+
+    var arrowOffset = 150;
+
+    bucketMark.selectAll("line")
+        .attr("x1", -arrowOffset)
+        .attr("x2", 0)
+
+    bucketMark.selectAll("text")
+        .attr("x", -arrowOffset-15)
+
+    // TODO jmccaffrey these don't quite line up in X or Y with the target
+    var setY = function(tickClass, yNudge, accessor) {
+
+        var yAccessor = _.compose(dims.y, accessor);
+        var yNudgedAccessor = _.compose(function (v) {return yNudge + v}, yAccessor)
+        
+        bucketMark.selectAll("line." + tickClass)
+           .attr("y1", yNudgedAccessor)
+           .attr("y2", yAccessor)
+
+        bucketMark.selectAll("text." + tickClass)
+           .attr("y", yNudgedAccessor)
+    }
+
+    var bigNudge = 50,
+        littleNudge = 30;
+
+    setY("extreme-min", bigNudge, function (d) {
+        return d.value.EMNT;
+    });
+    setY("extreme-max", -bigNudge, function (d) {
+        return d.value.EMXT;
+    });
+    setY("mean-min", littleNudge, function (d) {
+        return d.value.MMNT;
+    });
+    setY("mean-max", -littleNudge, function (d) {
+        return d.value.MMXT;
+    });
+    setY("mean", 0, function (d) {
+        return d.value.MNTM;
+    });
+
+    var rectHeight = function(d) {
+        return dims.y(d.value.EMNT) - dims.y(d.value.EMXT);
+    }
+
+    // We assume that the scale is linear in the y calculation
+    svg.select("rect#plot-hole")
+        .attr("x", function(d) {
+            return dims.x(d.key) + dims.barSpace/2 - plotHoleWidth/2;
+        })
+        .attr("y", function(d) {
+                return dims.y(d.value.EMXT) - ((plotHoleHeightFactor - 1)*rectHeight(d))/2;
+        })
+        .attr("width", plotHoleWidth)
+        .attr("height", function(d) {
+            return rectHeight(d)*plotHoleHeightFactor;
+        })
+
+    var tempHoleWidth = plotHoleWidth;
+
+    // We assume that the scale is linear in the y calculation
+    svg.select("rect#temp-hole")
+        .attr("x", function(d) {
+            return -tempHoleWidth/2 - 20;
+        })
+        .attr("y", function(d) {
+                return dims.y(d.value.EMXT) - ((plotHoleHeightFactor - 1)*rectHeight(d))/2;
+        })
+        .attr("width", tempHoleWidth)
+        .attr("height", function(d) {
+            return rectHeight(d)*plotHoleHeightFactor;
+        })
 }
 
 var localityOrder = ["neighborhood", "locality", "administrative_area_level_3", "administrative_area_level_2", "administrative_area_level_1"];
 // How to return value orm for each loop ?
 function localityName(geocoded) {
-    comp = _.find(geocoded.address_components, function(comp) {
-        inter = _.intersection(comp.types, localityOrder);
+    var comp = _.find(geocoded.address_components, function(comp) {
+        var inter = _.intersection(comp.types, localityOrder);
         console.log(inter.length);
         return inter.length > 0;
     });
@@ -157,7 +259,7 @@ function updateLabel(svg, humanPlace, geocoded) {
     var url = window.location.hostname + window.location.pathname + '/' + $.param({'place': geocoded.address_components[0].long_name})
     
     // TODO templates
-    bodyString = 
+    var bodyString = 
         '<div class="labeltop">' +
             cityAndState + '<br/>' +
             latAndLong + 
@@ -335,6 +437,7 @@ function remeasureBuckets(svg, dims) {
         return d.value.MNTM;
     });
 
+
     // TODO make .hover work for touch events !
     $('.bucket').hover(function hoverIn(ev) {
         pseudoHoverNthTick(svg, $(this).index());
@@ -376,6 +479,79 @@ function updateBuckets(svg,  data) {
     buckets.classed("animate-in", false);
     buckets.classed("animate-in", true);
 }
+
+function updateCoachMarks(svg, data) {
+    var bucketMark = svg.selectAll('g.bucket-mark.coach-marks')
+        .data([data[coachMarkHighlightIndex]]);
+
+    var bucketMarkEnter = bucketMark.enter()
+        .append("g")
+        .classed({"margin-offset": true, "coach-marks": true})
+        .append("g")
+        .classed({"bucket-mark": true});
+
+    bucketMarkEnter.append("text")
+        .classed("extreme-max", true)
+        .text("Highest temperature seen in this month")
+    bucketMarkEnter.append("text")
+        .classed("extreme-min", true)
+        .text("Lowest temperature seen in this month")
+    bucketMarkEnter.append("text")
+        .classed("mean", true)
+        .text("Average temperature");
+    bucketMarkEnter.append("text")
+        .classed("mean-min", true)
+        .text("Average low temperature");
+    bucketMarkEnter.append("text")
+        .classed("mean-max", true)
+        .text("Average high temperature");
+
+
+    bucketMarkEnter.append("line")
+        .classed("extreme-max", true);
+    bucketMarkEnter.append("line")
+        .classed("extreme-min", true);
+    bucketMarkEnter.append("line")
+        .classed("mean", true);
+    bucketMarkEnter.append("line")
+        .classed("mean-min", true);
+    bucketMarkEnter.append("line")
+        .classed("mean-max", true);
+
+    bucketMark.selectAll("text")
+        .attr("text-anchor", "end")
+        .classed("chalk-text", true);
+
+    bucketMark.selectAll("line")
+        .attr("stroke", "white")
+        .attr("stroke-width", "4")
+        .attr("marker-end", "url(#markerTriangle)");
+
+    var highlight = svg.select(".margin-mask")
+        .selectAll(".highlight")
+        .data([data[coachMarkHighlightIndex]]);
+
+    var highlightEnter = highlight.enter()
+        .append("g")
+        .classed("highlight", true);
+
+    highlightEnter.append("rect")
+        // .attr("fill", "#000000")
+        .attr("fill", "url(#plot-hole-gradient)")
+        .attr("id", "plot-hole")
+
+    highlightEnter.append("rect")
+        // .attr("fill", "#000000")
+        .attr("fill", "url(#plot-hole-gradient)")
+        .attr("id", "month-hole")
+
+    highlightEnter.append("rect")
+        // .attr("fill", "#000000")
+        .attr("fill", "url(#temp-hole-gradient)")
+        .attr("id", "temp-hole")
+
+}
+
 
 function remeasureChart(cb) {
 
@@ -517,21 +693,75 @@ function remeasureChart(cb) {
         barWidth: barWidth,
         barSpace: barSpace,
         windowWidth: windowWidth,
-        windowHeight: windowHeight
+        windowHeight: windowHeight,
+        margin: margin
     });
 }
 
 function appendChart() {
-    var svg = d3.select(".result svg").append("g");
-    var gx = svg.append("g").attr("class", "x axis");
-    var gy = svg.append("g").attr("class", "y axis little");
-    var gy = svg.append("g").attr("class", "y axis medium");
-    var gy = svg.append("g").attr("class", "y axis big");
-    var gy = svg.append("g").attr("class", "y axis print");
+    var svg = d3.select(".result svg");
+    // TODO need a class here
+    var g = svg.append("g")
+        .classed("margined-group", true);
+
+    var defs = g.append("defs")
+
+    defs.append("marker")
+        .attr("id", "markerTriangle")
+        .attr("fill", "white" )
+        .attr("viewBox", "0 0 10 10" )
+        .attr("refX", "1") 
+        .attr("refY", "5")
+        .attr("markerWidth", "6")
+        .attr("markerHeight", "6")
+        .attr("orient", "auto")
+        .append("path")
+        .attr("d", "M 0 0 L 10 5 L 0 10 z")
+
+    var mask = defs.append("mask")
+        .attr("id", "coach-mark-dim-mask");
+        
+
+    var plotHoleGradient = defs.append("radialGradient")
+        .attr("id", "plot-hole-gradient")
+
+    plotHoleGradient.append("stop")
+        .attr("offset", "70%")
+        .attr("stop-color", "black")
+
+    plotHoleGradient.append("stop")
+        .attr("offset", "100%")
+        .attr("stop-color", "white")
+
+
+    var tempHoleGradient = defs.append("radialGradient")
+        .attr("id", "temp-hole-gradient")
+
+    tempHoleGradient.append("stop")
+        .attr("offset", "70%")
+        .attr("stop-color", "black")
+
+    tempHoleGradient.append("stop")
+        .attr("offset", "100%")
+        .attr("stop-color", "white")
+
+
+    mask.append("rect")
+        .attr("fill", "#ffffff")
+        .attr("id", "mask-bg")
+
+    var maskGroup = mask.append("g")
+        .classed("margin-mask", true);
+
+    g.append("g").attr("class", "x axis");
+    g.append("g").attr("class", "y axis little");
+    g.append("g").attr("class", "y axis medium");
+    g.append("g").attr("class", "y axis big");
+    g.append("g").attr("class", "y axis print");
 
     appendLabel(svg);
 
-    svg.append("g").classed("buckets", true)
+    g.append("g").classed("buckets", true)
 
     appendCoachMarks(svg);
 }
@@ -577,8 +807,8 @@ function dropPseudoHoverTicks(svg) {
 // Gray with gradient, white hand-drawn text
 function showCoachMarks(svg) {
     svg.selectAll(".coach-marks").classed("hidden", false);
-    pseudoHoverNthBucket(svg, 8);
-    pseudoHoverNthTick(svg, 8);
+    pseudoHoverNthBucket(svg, coachMarkHighlightIndex);
+    pseudoHoverNthTick(svg, coachMarkHighlightIndex);
 }
 
 function hideCoachMarks(svg) {
@@ -643,7 +873,7 @@ function getQueryStrings() {
 
 function loadData(cb) {
 
-    qs = getQueryStrings();
+    var qs = getQueryStrings();
 
     var geocoder = new google.maps.Geocoder();
     var humanPlace = decodeURIComponent(qs['place']);
@@ -697,6 +927,7 @@ function onDataAndChartResults(res) {
     window.document.title = 'Buentiempo Chart ! - ' + res.data.geocoded.address_components[0].long_name;
     updateBuckets(svg, res.data.body);
     updateLabel(svg, res.data.humanPlace, res.data.geocoded);
+    updateCoachMarks(svg, res.data.body);
     remeasureBuckets(svg, res.chartDims);
     remeasureLabel(svg, res.chartDims);
     remeasureCoachMarks(svg, res.chartDims);
