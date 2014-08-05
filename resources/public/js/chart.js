@@ -17,6 +17,8 @@ function setOnPrinting(beforePrint, afterPrint) {
     window.onafterprint = afterPrint;
 }
 
+var bezierForCoachMarks = true;
+
 var coachMarkHighlightIndex = 8;
 
 var lowestTemp = -20;
@@ -164,25 +166,41 @@ function remeasureCoachMarks(svg, dims) {
 
     var arrowOffset = 150;
 
-    bucketOffset.selectAll("line")
-        .attr("x1", -arrowOffset)
-        .attr("x2", 0)
-
     bucketOffset.selectAll("text")
         .attr("x", -arrowOffset-15)
 
     var setY = function(tickClass, yNudge, accessor) {
 
         var yAccessor = _.compose(dims.y, accessor);
-        var yNudgedAccessor = _.compose(function (v) {return yNudge + v}, yAccessor)
+        var yNudgedAccessor = _.compose(function (v) {return yNudge + v}, yAccessor);
+
+        var arcingPath = function(x1, y1, x2, y2) {
+            console.log({"y1": y1, "y2": y2});
+            return "M" + x1 + "," + y1 +
+                   " C" + ((2*x1 + x2)/3) + ", " + (((2*y1 + y2)/3) - 10) +
+                   " " + ((x1 + 2*x2)/3) + ", " + (((y1 + 2*y2)/3) - 7) +
+                   " " + x2 + "," + y2;
+        };
+
+        var x1 = -arrowOffset,
+            x2 = 0;
         
-        bucketOffset.selectAll("line." + tickClass)
-           .attr("y1", yNudgedAccessor)
-           .attr("y2", yAccessor)
+        if (bezierForCoachMarks) {
+            bucketOffset.selectAll("path." + tickClass)
+                .attr("d", function(d) {
+                    return arcingPath(x1, yNudgedAccessor(d), x2, yAccessor(d));
+                    });
+        } else {
+            bucketOffset.selectAll("line." + tickClass)
+               .attr("x1", x1)
+               .attr("x2", x2)
+               .attr("y1", yNudgedAccessor)
+               .attr("y2", yAccessor);
+        }
 
         bucketOffset.selectAll("text." + tickClass)
            .attr("y", yNudgedAccessor)
-    }
+    };
 
     var bigNudge = 50,
         littleNudge = 30;
@@ -588,16 +606,29 @@ function updateCoachMarks(svg, data) {
         .text("Average high");
 
 
-    bucketOffsetEnter.append("line")
-        .classed("extreme-max", true);
-    bucketOffsetEnter.append("line")
-        .classed("extreme-min", true);
-    bucketOffsetEnter.append("line")
-        .classed("mean", true);
-    bucketOffsetEnter.append("line")
-        .classed("mean-min", true);
-    bucketOffsetEnter.append("line")
-        .classed("mean-max", true);
+    if (bezierForCoachMarks) {
+        bucketOffsetEnter.append("path")
+            .classed({"extreme-max": true, "plot-arrow": true });
+        bucketOffsetEnter.append("path")
+            .classed({"extreme-min": true, "plot-arrow": true });
+        bucketOffsetEnter.append("path")
+            .classed({"mean": true, "plot-arrow": true});
+        bucketOffsetEnter.append("path")
+            .classed({"mean-min": true, "plot-arrow": true });
+        bucketOffsetEnter.append("path")
+            .classed({"mean-max": true, "plot-arrow": true});
+    } else {
+        bucketOffsetEnter.append("line")
+            .classed({"extreme-max": true, "plot-arrow": true});
+        bucketOffsetEnter.append("line")
+            .classed({"extreme-min": true, "plot-arrow": true});
+        bucketOffsetEnter.append("line")
+            .classed({"mean": true, "plot-arrow": true});
+        bucketOffsetEnter.append("line")
+            .classed({"mean-min": true, "plot-arrow": true});
+        bucketOffsetEnter.append("line")
+            .classed({"mean-max": true, "plot-arrow": true});
+    }
 
     var bucketOffset = bucketData.selectAll(".bucket-offset");
 
@@ -606,9 +637,10 @@ function updateCoachMarks(svg, data) {
         .classed("chalk-text", true);
 
     // TODO use rect instead, for more chalk-ey look ?
-    bucketOffset.selectAll("line")
+    bucketOffset.selectAll(".plot-arrow")
         .attr("stroke", "white")
         .attr("stroke-width", "4")
+        .attr("fill", "none")
         .attr("marker-end", "url(#markerTriangle)");
 
     var highlight = svg.select(".margin-mask")
@@ -930,6 +962,8 @@ function shouldShowCoachMarksOnLoad() {
 // TODO library to make this simple to lay down ?
 // Gray with gradient, white hand-drawn text
 function showCoachMarks(svg) {
+    console.log("hide for coach marks");
+    svg.select(".label").classed("hidden-for-coach-marks", true);
     svg.selectAll(".coach-marks").classed("hidden", false);
     // The tick doesn't seem to be hovered properly ?
     pseudoHoverNthBucket(svg, coachMarkHighlightIndex);
@@ -937,6 +971,7 @@ function showCoachMarks(svg) {
 }
 
 function hideCoachMarks(svg) {
+    svg.select(".label") .classed("hidden-for-coach-marks", false);
     svg.selectAll(".coach-marks").classed("hidden", true);
     dropPseudoHoverBuckets(svg);
     dropPseudoHoverTicks(svg);

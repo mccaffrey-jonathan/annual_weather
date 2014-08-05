@@ -29,6 +29,11 @@ body {
     visibility: hidden;
 }
 
+.hidden-for-coach-marks {
+    visibility: hidden;
+    display: none;
+}
+
 .center-transparent-in-relative {
     position:absolute; 
     top:0; 
@@ -184,17 +189,18 @@ line.bucket-label.mean  {
 }
 
 @font-face {
-    font-family: MissionScript;
+    font-family: "MissionScript";
     src: url("/res/otf/Mission-Script.otf") format("opentype");
 }
 
 @font-face {
-    font-family: SandwichPaper;
+    font-family: "SandwichPaper";
     src: url("/res/ttf/SandwichPaper.ttf") format("truetype");
 }
 
 .chalk-text {
-  font-family: "SandwichPaper", sans-serif;
+  font-family: "MissionScript", sans-serif;
+  font-size: 150%;
   fill: white;
 }
 
