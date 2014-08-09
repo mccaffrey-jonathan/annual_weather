@@ -126,6 +126,7 @@ function appendCoachLabel(svg) {
         .classed({"coach-label": true, "coach-marks": true})
         .append("foreignObject")
         .classed("war-foreign-object", true)
+        .classed("coach-marks", true)
         .attr("width", 500)
         .attr("height", 500)
         .append("xhtml:body")
@@ -684,11 +685,8 @@ function updateCoachMarks(svg, data) {
         .attr("text-anchor", "end")
         .classed("chalk-text", true);
 
-    // TODO use rect instead, for more chalk-ey look ?
     bucketOffset.selectAll(".plot-arrow")
-        .attr("stroke", "white")
-        .attr("stroke-width", "4")
-        .attr("marker-end", "url(#markerTriangle)");
+        .call(littleMarkArrow);
 
     var highlight = svg.select(".margin-mask")
         .selectAll(".highlight")
@@ -1029,7 +1027,7 @@ function showCoachMarks(svg) {
 }
 
 function hideCoachMarks(svg) {
-    svg.select(".label") .classed("hidden-for-coach-marks", false);
+    svg.selectAll(".label") .classed("hidden-for-coach-marks", false);
     svg.selectAll(".coach-marks").classed("hidden", true);
     dropPseudoHoverBuckets(svg);
     dropPseudoHoverTicks(svg);
