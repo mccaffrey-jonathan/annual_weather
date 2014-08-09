@@ -87,12 +87,14 @@
                  "http://cdnjs.cloudflare.com/ajax/libs/d3/3.4.8/d3.min.js"
                  ; "http://code.jquery.com/jquery-1.11.0.min.js"
                  "http://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min.js"
+                 "http://code.jquery.com/mobile/1.4.3/jquery.mobile-1.4.3.min.js"
                  ; TODO don't use client-side LESS in production
                  "http://cdnjs.cloudflare.com/ajax/libs/less.js/1.6.3/less.min.js"
                  ; "js/async.js"
                  "http://cdnjs.cloudflare.com/ajax/libs/async/0.9.0/async.js"
                  ; "js/underscore.js"
                  "http://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.6.0/underscore-min.js"
+                 "/res/js/jquery.cookie.js"
                  (format "https://maps.googleapis.com/maps/api/js?key=%s" google-maps-api-key)
                  "/res/js/chart.js")]
     [:body

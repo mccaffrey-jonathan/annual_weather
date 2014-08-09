@@ -117,6 +117,25 @@ function appendLabel(svg) {
         .append("div");
 }
 
+function appendCoachLabel(svg) {
+    var bodyString = 
+        '<div class="coach-label-top">Buontiempo!</div>' +
+        'Click/Tap anywhere to dismiss intro';
+
+    svg.append("g")
+        .classed({"coach-label": true, "coach-marks": true})
+        .append("foreignObject")
+        .classed("war-foreign-object", true)
+        .attr("width", 500)
+        .attr("height", 500)
+        .append("xhtml:body")
+        .append("span")
+        .style("display", "inline-block")
+        .style("text-align", "center")
+        .append("div")
+        .html(bodyString);
+}
+
 function appendCoachMarks(svg) {
     // TODO: this needs to go under a different transform
     var dim = svg
@@ -125,11 +144,18 @@ function appendCoachMarks(svg) {
         .attr("mask", "url(#coach-mark-dim-mask)");
 
     svg.append("g")
-        .classed({"coach-marks": true, "margin-offset": true})
+       .classed({"coach-marks": true, "margin-offset": true})
+
+    appendCoachLabel(svg);
 
     $(svg[0]).click(function(ev) {
         hideCoachMarks(svg)
     });
+
+    $(svg[0]).on("tap", function(ev) {
+        hideCoachMarks(svg)
+    });
+
 }
 
 function remeasureCoachMarks(svg, dims) {
@@ -295,6 +321,8 @@ function remeasureCoachMarks(svg, dims) {
         .attr("cx", tempArrowX)
         .attr("cy", h - tempArrowStart)
         .attr("r", 8);
+
+    remeasureCoachLabel(svg, dims);
 }
 
 var localityOrder = ["neighborhood", "locality", "administrative_area_level_3", "administrative_area_level_2", "administrative_area_level_1"];
@@ -350,12 +378,33 @@ function updateLabel(svg, humanPlace, geocoded) {
         .html(bodyString);
 }
 
+function remeasureLabelCoords(chartDims) {
+    return {
+        x: chartDims.windowWidth - 500,
+        y: chartDims.windowHeight - 250,
+    };
+}
+
 function remeasureLabel(svg, chartDims) {
+    var coords = remeasureLabelCoords(chartDims);
     var label = svg.select("g.label")
         .attr("transform", "translate(" +
-                (chartDims.windowWidth - 500).toString() +
+                coords.x.toString() +
                 ", " +
-                (chartDims.windowHeight - 250).toString() +
+                coords.y.toString() +
+                ")");
+
+    var tooSmall = (chartDims.windowHeight < 480 || chartDims.windowWidth < 640)
+    label.classed('hidden', tooSmall);
+}
+
+function remeasureCoachLabel(svg, chartDims) {
+    var coords = remeasureLabelCoords(chartDims);
+    var label = svg.select("g.coach-label")
+        .attr("transform", "translate(" +
+                coords.x.toString() +
+                ", " +
+                coords.y.toString() +
                 ")");
 
     var tooSmall = (chartDims.windowHeight < 480 || chartDims.windowWidth < 640)
@@ -544,6 +593,20 @@ function updateBuckets(svg,  data) {
     buckets.classed("animate-in", true);
 }
 
+function littleMarkArrow(sel) {
+    sel.attr("stroke", "white")
+       .attr("fill", "none")
+       .attr("stroke-width", "4")
+       .attr("marker-end", "url(#markerTriangle)");
+}
+
+function bigMarkArrow(sel) {
+    sel.attr("stroke", "white")
+       .attr("fill", "none")
+       .attr("stroke-width", "6")
+       .attr("marker-end", "url(#bigMarkerTriangle)");
+}
+
 function updateCoachMarks(svg, data) {
     var marginOffset = svg.select(".coach-marks.margin-offset");
 
@@ -557,9 +620,7 @@ function updateCoachMarks(svg, data) {
     bucketDataEnter
         .append("line")
         .attr("id", "temp-arrow")
-        .attr("stroke", "white")
-        .attr("stroke-width", "6")
-        .attr("marker-end", "url(#bigMarkerTriangle)");
+        .call(bigMarkArrow);
 
     bucketDataEnter
         .append("text")
@@ -575,9 +636,7 @@ function updateCoachMarks(svg, data) {
     bucketDataEnter
         .append("line")
         .attr("id", "month-arrow")
-        .attr("stroke", "white")
-        .attr("stroke-width", "6")
-        .attr("marker-end", "url(#bigMarkerTriangle)");
+        .call(bigMarkArrow);
 
     bucketDataEnter
         .append("text")
@@ -589,45 +648,34 @@ function updateCoachMarks(svg, data) {
         .append("g")
         .classed("bucket-offset", true);
 
-    bucketOffsetEnter.append("text")
-        .classed("extreme-max", true)
-        .text("Highest")
-    bucketOffsetEnter.append("text")
-        .classed("extreme-min", true)
-        .text("Lowest")
-    bucketOffsetEnter.append("text")
-        .classed("mean", true)
-        .text("Average temperature");
-    bucketOffsetEnter.append("text")
-        .classed("mean-min", true)
-        .text("Average low");
-    bucketOffsetEnter.append("text")
-        .classed("mean-max", true)
-        .text("Average high");
+    var classesToLabel = {
+        "extreme-max": "Highest",
+        "extreme-min": "Lowest",
+        "mean": "Average temperature",
+        "mean-min": "Average low",
+        "mean-max": "Average high",
+    };
 
+    _.each(classesToLabel, function(txt, clazz) {
+        bucketOffsetEnter.append("text")
+            .classed(clazz, true)
+            .text(txt);
+    });
 
     if (bezierForCoachMarks) {
-        bucketOffsetEnter.append("path")
-            .classed({"extreme-max": true, "plot-arrow": true });
-        bucketOffsetEnter.append("path")
-            .classed({"extreme-min": true, "plot-arrow": true });
-        bucketOffsetEnter.append("path")
-            .classed({"mean": true, "plot-arrow": true});
-        bucketOffsetEnter.append("path")
-            .classed({"mean-min": true, "plot-arrow": true });
-        bucketOffsetEnter.append("path")
-            .classed({"mean-max": true, "plot-arrow": true});
+        _.each(classesToLabel, function(txt, clazz) {
+            var classes = {"plot-arrow": true};
+            classes[clazz] = true;
+            bucketOffsetEnter.append("path")
+                .classed(classes);
+        });
     } else {
-        bucketOffsetEnter.append("line")
-            .classed({"extreme-max": true, "plot-arrow": true});
-        bucketOffsetEnter.append("line")
-            .classed({"extreme-min": true, "plot-arrow": true});
-        bucketOffsetEnter.append("line")
-            .classed({"mean": true, "plot-arrow": true});
-        bucketOffsetEnter.append("line")
-            .classed({"mean-min": true, "plot-arrow": true});
-        bucketOffsetEnter.append("line")
-            .classed({"mean-max": true, "plot-arrow": true});
+        _.each(classesToLabel, function(txt, clazz) {
+            var classes = {"plot-arrow": true};
+            classes[clazz] = true;
+            bucketOffsetEnter.append("line")
+                .classed(classes);
+        });
     }
 
     var bucketOffset = bucketData.selectAll(".bucket-offset");
@@ -640,7 +688,6 @@ function updateCoachMarks(svg, data) {
     bucketOffset.selectAll(".plot-arrow")
         .attr("stroke", "white")
         .attr("stroke-width", "4")
-        .attr("fill", "none")
         .attr("marker-end", "url(#markerTriangle)");
 
     var highlight = svg.select(".margin-mask")
@@ -654,18 +701,17 @@ function updateCoachMarks(svg, data) {
     highlightEnter.append("rect")
         // .attr("fill", "#000000")
         .attr("fill", "url(#month-hole-gradient)")
-        .attr("id", "month-hole")
+        .attr("id", "month-hole");
 
     highlightEnter.append("rect")
         // .attr("fill", "#000000")
         .attr("fill", "url(#temp-hole-gradient)")
-        .attr("id", "temp-hole")
+        .attr("id", "temp-hole");
 
     highlightEnter.append("rect")
         // .attr("fill", "#000000")
         .attr("fill", "url(#plot-hole-gradient)")
-        .attr("id", "plot-hole")
-
+        .attr("id", "plot-hole");
 }
 
 
@@ -956,6 +1002,18 @@ function dropPseudoHoverTicks(svg) {
 }
 
 function shouldShowCoachMarksOnLoad() {
+    var qs = getQueryStrings();
+
+    if (qs['showCoachMarks']) {
+        return true;
+    }
+
+    if ($.cookie('seenCoachMarks')) {
+        return false;
+    }
+
+    $.cookie('seenCoachMarks', true);
+
     return true;
 }
 
@@ -1015,6 +1073,7 @@ function GeocoderResultToJSONObject (res) {
     }
 }
 
+// TODO memoize this function; it reparses each time
 function getQueryStrings() { 
     var assoc  = {};
     var decode = function (s) { return decodeURIComponent(s.replace(/\+/g, " ")); };
